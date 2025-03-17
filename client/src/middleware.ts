@@ -25,17 +25,25 @@ export async function middleware(request: NextRequest) {
 
   // Secure paths
   const securePaths = ["/admin", "/moderator"];
+  const userPaths = [
+    "/problems",
+    "/contest",
+    "/leaderboard",
+    "/groups",
+    "/discuss",
+  ];
 
   // Check if the current path is secure
   const isSecure = isSecurePath(securePaths, request);
+  const isUserPath = isSecurePath(userPaths, request);
 
   // If the user is not authenticated and tries to access a secure path, redirect to login
-  if (!user && isSecure) {
+  if (!user && (isSecure || isUserPath)) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   // If the user is authenticated and tries to access a secure path
-  if (user && isSecure) {
+  if (user && (isSecure || isUserPath)) {
     // Fetch the user's role from the database
     const { data: userRole, error: roleError } = await supabase
       .from("tbl_user_roles")
@@ -70,7 +78,9 @@ export async function middleware(request: NextRequest) {
     // Check if the current path is secure and if the user has the correct role
     if (
       (request.nextUrl.pathname.startsWith("/admin") && role !== "admin") ||
-      (request.nextUrl.pathname.startsWith("/moderator") && role !== "moderator")
+      (request.nextUrl.pathname.startsWith("/moderator") &&
+        role !== "moderator") ||
+      (isUserPath && role === "moderator")
     ) {
       return NextResponse.redirect(new URL("/403", request.url));
     }

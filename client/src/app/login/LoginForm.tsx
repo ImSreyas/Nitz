@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import GoogleIconSVG from "@/icons/GoogleIconSVG";
 import { Github } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import { googleAuthLogin } from "../auth/googleAuth";
 
 function errorComponent(message: string) {
   return <p className="text-red-500 text-sm">{message}</p>;
@@ -102,7 +103,11 @@ export default function LoginForm() {
         </div>
 
         <div className="space-y-4">
-          <Button variant="outline" className="w-full">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => {googleAuthLogin()}}
+          >
             <GoogleIconSVG />
             Continue with Google
           </Button>

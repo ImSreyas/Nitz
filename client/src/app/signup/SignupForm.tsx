@@ -19,6 +19,7 @@ import { Github } from "lucide-react";
 import GoogleIconSVG from "@/icons/GoogleIconSVG";
 import { Info } from "lucide-react"; // Import the Info icon
 import { createClient } from "@/utils/supabase/client";
+import { googleAuthSignUp } from "../auth/googleAuth";
 
 const schema = z
   .object({
@@ -91,13 +92,20 @@ export default function SignupForm() {
     setError("username", { message: "" });
 
     try {
-      const { data: existingUser } = await supabase
+      const { data: existingUserInUsers } = await supabase
         .from("tbl_users")
         .select("id")
         .eq("username", formData.username)
         .single();
 
-      if (existingUser) {
+      // Check username in tbl_moderators
+      const { data: existingUserInModerators } = await supabase
+        .from("tbl_moderators")
+        .select("id")
+        .eq("username", formData.username)
+        .single();
+
+      if (existingUserInUsers || existingUserInModerators) {
         setError("username", { message: "Username already taken" });
         setLoading(false);
         return;
@@ -153,7 +161,13 @@ export default function SignupForm() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <Button variant="outline" className="w-full">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => {
+              googleAuthSignUp("user");
+            }}
+          >
             <GoogleIconSVG /> Continue with Google
           </Button>
           <Button variant="outline" className="w-full">

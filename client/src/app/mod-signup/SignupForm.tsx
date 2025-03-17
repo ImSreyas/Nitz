@@ -17,8 +17,9 @@ import {
 } from "@/components/ui/card";
 import { Github } from "lucide-react";
 import GoogleIconSVG from "@/icons/GoogleIconSVG";
-import { Info } from "lucide-react"; // Import the Info icon
+import { Info } from "lucide-react"; 
 import { createClient } from "@/utils/supabase/client";
+import { googleAuthSignUp } from "../auth/googleAuth";
 
 const schema = z
   .object({
@@ -161,7 +162,13 @@ export default function SignupForm() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <Button variant="outline" className="w-full">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => {
+              googleAuthSignUp("moderator");
+            }}
+          >
             <GoogleIconSVG /> Continue with Google
           </Button>
           <Button variant="outline" className="w-full">

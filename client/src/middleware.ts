@@ -20,7 +20,7 @@ export async function middleware(request: NextRequest) {
 
   if (sessionError) {
     console.error("Error fetching session:", sessionError);
-    return NextResponse.redirect(new URL("/login", request.url));
+    // return NextResponse.redirect(new URL("/", request.url));
   }
 
   // Secure paths

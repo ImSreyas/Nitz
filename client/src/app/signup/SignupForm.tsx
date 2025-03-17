@@ -26,7 +26,8 @@ const schema = z
     username: z
       .string()
       .min(3, "Username must be at least 3 characters")
-      .regex(/^[A-Z_]+$/, "Only letters and '_' allowed."),
+      .max(30, "Username must be at most 30 characters")
+      .regex(/^[A-Za-z_]{3,30}$/, "Only letters and '_' allowed."),
     password: z
       .string()
       .min(6, "Password must be at least 6 characters")
@@ -121,11 +122,11 @@ export default function SignupForm() {
       const { error } = await supabase.rpc("add_user_with_role", {
         p_id: newUserId,
         p_username: formData.username,
-        p_user_role: "user",
+        p_email: formData.email,
       });
 
       if (error) {
-        // console.log("Error adding user role:", error);
+        console.log("Error adding user role:", error);
         setError("email", { message: "Something went wrong." });
         setLoading(false);
         return;

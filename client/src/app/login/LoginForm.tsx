@@ -1,11 +1,96 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import GoogleIconSVG from "@/icons/GoogleIconSVG";
 import { Github } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
+
+function errorComponent(message: string) {
+  return <p className="text-red-500 text-sm">{message}</p>;
+}
+
+const loginSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
+  const router = useRouter();
+  const supabase = createClient();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setError,
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
+    const { email, password } = data;
+
+    // Check if the email exists in tbl_users or tbl_moderators
+    const { error: userEmailError } = await supabase
+      .from("tbl_users")
+      .select("email")
+      .eq("email", email)
+      .single();
+
+    const { error: moderatorEmailError } = await supabase
+      .from("tbl_moderators")
+      .select("email")
+      .eq("email", email)
+      .single();
+
+    if (userEmailError && moderatorEmailError) {
+      setError("email", {
+        type: "manual",
+        message: "Invalid email.",
+      });
+      return;
+    }
+
+    // Attempt to sign in
+    const { data: user, error: loginError } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+    if (loginError) {
+      setError("password", {
+        type: "manual",
+        message: "Invalid password.",
+      });
+      return;
+    }
+
+    // Redirect based on user role
+    const { data: userData } = await supabase
+      .from("tbl_user_roles")
+      .select("role")
+      .eq("id", user.user?.id)
+      .single();
+
+    if (userData) {
+      if (userData.role === "moderator") {
+        router.push("/moderator");
+      } else if (userData.role === "user") {
+        router.push("/problems");
+      }
+    }
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-background px-28 py-8">
       <div className="w-full max-w-md space-y-8">
@@ -26,11 +111,6 @@ export default function LoginForm() {
             <Github className="w-5 h-5 mr-2" />
             Continue with GitHub
           </Button>
-
-          {/* <Button variant="outline" className="w-full">
-            <Mail className="w-5 h-5 mr-2" />
-            Sign in with Email
-          </Button> */}
         </div>
 
         <div className="relative">
@@ -45,7 +125,7 @@ export default function LoginForm() {
         </div>
 
         <div>
-          <form>
+          <form onSubmit={handleSubmit(onSubmit)}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
@@ -53,8 +133,9 @@ export default function LoginForm() {
                   id="email"
                   type="email"
                   placeholder="demo@example.com"
-                  required
+                  {...register("email")}
                 />
+                {errors.email && errorComponent(errors.email.message || "")}
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
@@ -66,7 +147,14 @@ export default function LoginForm() {
                     Forgot your password?
                   </a>
                 </div>
-                <Input id="password" type="password" required />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="******"
+                  {...register("password")}
+                />
+                {errors.password &&
+                  errorComponent(errors.password.message || "")}
               </div>
               <Button type="submit" className="w-full">
                 Login

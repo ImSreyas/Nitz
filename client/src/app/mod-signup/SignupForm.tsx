@@ -129,10 +129,11 @@ export default function SignupForm() {
       const { error } = await supabase.rpc("add_moderator_with_role", {
         p_id: newUserId,
         p_username: formData.username,
+        p_email: formData.email,
       });
 
       if (error) {
-        // console.log("Error adding user role:", error);
+        console.log("Error adding user role:", error);
         setError("email", { message: "Something went wrong." });
         console.log(error);
         setLoading(false);

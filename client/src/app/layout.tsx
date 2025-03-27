@@ -14,7 +14,7 @@ import Nav from "./nav/Nav";
 // });
 
 export const metadata: Metadata = {
-  title: "Nitz",
+  title: "Bitz",
   description: "Real-time Competitive Coding Platform",
 };
 

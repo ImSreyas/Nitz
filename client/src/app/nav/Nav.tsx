@@ -18,13 +18,13 @@ export default function Nav() {
   const path = usePathname();
 
   return NavAllowedPaths.includes(path) ? (
-    <div className="backdrop-blur-xl bg-background/20 z-10 sticky -top-2 flex justify-center w-full h-fit px-8 pb-6 pt-8 border-b">
-      <div className="fixed top-6 left-16 flex items-center">
+    <div className="backdrop-blur-xl bg-background/20 z-10 sticky -top-2 flex justify-center w-full h-fit px-8 pb-8 pt-10 border-b">
+      <div className="fixed top-8 left-16 flex items-center">
         <div className="doto text-[1.8rem]">
-          <span className="text-primary">N</span>ITZ
+          <span className="text-primary">B</span>ITZ
         </div>
       </div>
-      <div className="fixed top-6 right-16 flex items-center space-x-6">
+      <div className="fixed top-8 right-16 flex items-center space-x-6">
         <button>
           <Sparkles size={22} />
         </button>

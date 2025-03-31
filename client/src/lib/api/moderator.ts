@@ -3,6 +3,8 @@ import { createClient } from "@/utils/supabase/client";
 import axios from "axios";
 
 export async function addProblem(data: typeof problemSchema._output) {
+  console.log(data);
+  const baseUrl = process.env.API_BASE_URL_JS || "http://localhost:4000";
   const supabase = createClient();
   try {
     const user = await supabase.auth.getUser();
@@ -13,9 +15,9 @@ export async function addProblem(data: typeof problemSchema._output) {
       return;
     }
 
-    const response = await axios.post("/moderators/problem", {
+    const response = await axios.post(`${baseUrl}/api/problem`, {
       ...data,
-      userId,
+      moderatorId: userId,
     });
 
     if (!response.data.success) {

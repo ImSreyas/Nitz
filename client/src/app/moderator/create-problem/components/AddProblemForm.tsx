@@ -22,9 +22,9 @@ import { addProblem } from "@/lib/api/moderator";
 export const problemSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters long"),
   difficulty: z.enum(["beginner", "easy", "medium", "hard", "complex"]),
-  problemType: z.enum(["coding", "debugging"]), // New field
-  competitionMode: z.enum(["general", "competitive"]), // New field
-  topics: z.string().min(1, "Topics are required"), // Renamed from "tags"
+  problemType: z.enum(["coding", "debugging"]), 
+  competitionMode: z.enum(["general", "competitive"]), 
+  topics: z.string().min(1, "Topics are required"),
   problemStatement: z
     .string()
     .min(10, "Problem statement must be at least 10 characters long"),
@@ -45,7 +45,8 @@ export const problemSchema = z.object({
   starterCode: z.array(
     z.object({
       language: z.string(),
-      code: z.string().optional(),
+      userCode: z.string().optional(),
+      logicCode: z.string().optional(),
     })
   ),
 });
@@ -78,16 +79,36 @@ export default function AddProblemForm() {
         { input: "", output: "", explanation: "" },
       ],
       starterCode: [
-        { language: "python", code: "" },
-        { language: "javascript", code: "" },
-        { language: "cpp", code: "" },
-        { language: "java", code: "" },
-        { language: "rust", code: "" },
+        { 
+          language: "python", 
+          userCode: "# User writes solution here\ndef addTwoNumbers(a, b):\n    # Your code here",
+          logicCode: "# Logic to transform inputs and compare outputs\ndef transform_input(input_args):\n    return list(map(int, input_args))\n\ndef transform_output(output):\n    return str(output)"
+        },
+        { 
+          language: "javascript", 
+          userCode: "// User writes solution here\nfunction addTwoNumbers(a, b) {\n  // Your code here\n}",
+          logicCode: "// Logic to transform inputs and compare outputs\nfunction transformInput(inputArgs) {\n  return inputArgs.map(Number);\n}\n\nfunction transformOutput(output) {\n  return output.toString();\n}"
+        },
+        { 
+          language: "java", 
+          userCode: "// User writes solution here\npublic class Solution {\n  public int addTwoNumbers(int a, int b) {\n    // Your code here\n  }\n}",
+          logicCode: "// Logic to transform inputs and compare outputs\npublic class TestRunner {\n  public static int[] transformInput(String[] inputArgs) {\n    int[] result = new int[inputArgs.length];\n    for (int i = 0; i < inputArgs.length; i++) {\n      result[i] = Integer.parseInt(inputArgs[i]);\n    }\n    return result;\n  }\n  \n  public static String transformOutput(int output) {\n    return Integer.toString(output);\n  }\n}"
+        },
+        { 
+          language: "cpp", 
+          userCode: "// User writes solution here\nint addTwoNumbers(int a, int b) {\n  // Your code here\n}",
+          logicCode: "// Logic to transform inputs and compare outputs\n#include <vector>\n#include <string>\n#include <sstream>\n\nstd::vector<int> transformInput(std::vector<std::string> inputArgs) {\n  std::vector<int> result;\n  for (const auto& arg : inputArgs) {\n    result.push_back(std::stoi(arg));\n  }\n  return result;\n}\n\nstd::string transformOutput(int output) {\n  return std::to_string(output);\n}"
+        },
+        { 
+          language: "rust", 
+          userCode: "// User writes solution here\npub fn add_two_numbers(a: i32, b: i32) -> i32 {\n    // Your code here\n}",
+          logicCode: "// Logic to transform inputs and compare outputs\npub fn transform_input(input_args: Vec<&str>) -> Vec<i32> {\n    input_args.iter()\n        .map(|s| s.parse().unwrap())\n        .collect()\n}\n\npub fn transform_output(output: i32) -> String {\n    output.to_string()\n}"
+        },
       ],
     },
   });
 
-  const languages = ["python", "javascript", "c", "cpp", "java", "rust"];
+  const languages = ["python", "javascript", "java", "cpp", "rust"];
   const [currentSelectedLanguage, setCurrentSelectedLanguage] = useState<
     (typeof languages)[number] | null
   >("python");
@@ -101,6 +122,34 @@ export default function AddProblemForm() {
     const result = addProblem(data);
     console.log(result);
   };
+
+  const handleUserCodeChange = (newCode: string | undefined) => {
+    setValue(
+      "starterCode",
+      watch("starterCode").map((item) => {
+        if (item.language === currentSelectedLanguage) {
+          return { ...item, userCode: newCode || "" };
+        }
+        return item;
+      })
+    );
+  };
+
+  const handleLogicCodeChange = (newCode: string | undefined) => {
+    setValue(
+      "starterCode",
+      watch("starterCode").map((item) => {
+        if (item.language === currentSelectedLanguage) {
+          return { ...item, logicCode: newCode || "" };
+        }
+        return item;
+      })
+    );
+  };
+
+  const currentStarterCode = watch("starterCode").find(
+    (item) => item.language === currentSelectedLanguage
+  );
 
   return (
     <div className="container px-4 py-10">
@@ -248,50 +297,71 @@ export default function AddProblemForm() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="mt-4 rounded-lg">
-                <MonacoEditor
-                  className="rounded-lg"
-                  height="400px"
-                  language={currentSelectedLanguage || "python"}
-                  value={
-                    watch("starterCode").find(
-                      (item) => item.language === currentSelectedLanguage
-                    )?.code || ""
-                  }
-                  onChange={(newCode) => {
-                    setValue(
-                      "starterCode",
-                      watch("starterCode").map((item) => {
-                        if (item.language === currentSelectedLanguage) {
-                          return { language: currentSelectedLanguage, code: newCode };
-                        }
-                        return item;
-                      })
-                    );
-                  }}
-                  beforeMount={(monaco) => {
-                    monaco.editor.defineTheme("customTheme", {
-                      base: "vs-dark",
-                      inherit: true,
-                      rules: [],
-                      colors: { "editor.background": "#0b0707" },
-                    });
-                  }}
-                  onMount={(editor, monaco) => {
-                    monaco.editor.setTheme("customTheme");
-                  }}
-                  options={{
-                    minimap: { enabled: false },
-                    padding: { top: 16, bottom: 10 },
-                    fontFamily: "Cascadia Code",
-                    scrollbar: {
-                      verticalScrollbarSize: 10,
-                      horizontalScrollbarSize: 10,
-                    },
-                    tabSize: 4,
-                    insertSpaces: true,
-                  }}
-                />
+              <div className="mt-4 grid grid-cols-1 3xl:grid-cols-2 gap-4">
+                <div className="rounded-lg">
+                  <label className="text-sm mb-2 block">User Code</label>
+                  <MonacoEditor
+                    className="rounded-lg"
+                    height="300px"
+                    language={currentSelectedLanguage || "python"}
+                    value={currentStarterCode?.userCode || ""}
+                    onChange={handleUserCodeChange}
+                    beforeMount={(monaco) => {
+                      monaco.editor.defineTheme("customTheme", {
+                        base: "vs-dark",
+                        inherit: true,
+                        rules: [],
+                        colors: { "editor.background": "#0b0707" },
+                      });
+                    }}
+                    onMount={(editor, monaco) => {
+                      monaco.editor.setTheme("customTheme");
+                    }}
+                    options={{
+                      minimap: { enabled: false },
+                      padding: { top: 16, bottom: 10 },
+                      fontFamily: "Cascadia Code",
+                      scrollbar: {
+                        verticalScrollbarSize: 10,
+                        horizontalScrollbarSize: 10,
+                      },
+                      tabSize: 4,
+                      insertSpaces: true,
+                    }}
+                  />
+                </div>
+                <div className="rounded-lg">
+                  <label className="text-sm mb-2 block">Logic Code</label>
+                  <MonacoEditor
+                    className="rounded-lg"
+                    height="300px"
+                    language={currentSelectedLanguage || "python"}
+                    value={currentStarterCode?.logicCode || ""}
+                    onChange={handleLogicCodeChange}
+                    beforeMount={(monaco) => {
+                      monaco.editor.defineTheme("customTheme", {
+                        base: "vs-dark",
+                        inherit: true,
+                        rules: [],
+                        colors: { "editor.background": "#0b0707" },
+                      });
+                    }}
+                    onMount={(editor, monaco) => {
+                      monaco.editor.setTheme("customTheme");
+                    }}
+                    options={{
+                      minimap: { enabled: false },
+                      padding: { top: 16, bottom: 10 },
+                      fontFamily: "Cascadia Code",
+                      scrollbar: {
+                        verticalScrollbarSize: 10,
+                        horizontalScrollbarSize: 10,
+                      },
+                      tabSize: 4,
+                      insertSpaces: true,
+                    }}
+                  />
+                </div>
               </div>
             </div>
             <div>

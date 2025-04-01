@@ -73,18 +73,20 @@ export async function addProblem(req, res) {
 
     // 🔹 Insert into `tbl_starter_code`
     const insertStarterCodeQuery = `
-      INSERT INTO tbl_starter_code (problem_id, language_id, code) 
-      VALUES ($1, (SELECT id FROM tbl_programming_languages WHERE LOWER(name) = LOWER($2)), $3)
+      INSERT INTO tbl_starter_code (problem_id, language_id, user_code, logic_code) 
+      VALUES ($1, (SELECT id FROM tbl_programming_languages WHERE LOWER(name) = $2), $3, $4)
     `;
     for (const code of starterCode) {
-      if (code.code) {
+      if (code.logicCode || code.userCode) {
+        console.log("Starter code language :", code.language);
         await client.query(insertStarterCodeQuery, [
           problemId,
           code.language.toLowerCase(),
-          code.code || null,
+          code.userCode || null,
+          code.logicCode || null,
         ]);
       }
-      }
+    }
 
     // 🔹 Insert into `tbl_allowed_languages`
     const insertAllowedLanguagesQuery = `
@@ -92,7 +94,7 @@ export async function addProblem(req, res) {
       VALUES ($1, (SELECT id FROM tbl_programming_languages WHERE LOWER(name) = LOWER($2)))
     `;
     for (const code of starterCode) {
-      if (code.code) {
+      if (code.logicCode || code.userCode) {
         await client.query(insertAllowedLanguagesQuery, [
           problemId,
           code.language,
@@ -102,15 +104,20 @@ export async function addProblem(req, res) {
 
     await client.query("COMMIT");
 
-    res
-      .status(201)
-      .json({
-        success: true,
-        message: "Problem added successfully!",
-        problemId,
-      });
+    res.status(201).json({
+      success: true,
+      message: "Problem added successfully!",
+      problemId,
+    });
   } catch (error) {
     await client.query("ROLLBACK");
+    if (error.code === '23505') {
+      return res.status(200).json({
+        success: false,
+        errorCode: error.code,
+        errorMessage: "Problem with the same name already exist",
+      });
+    }
     console.error("Transaction error:", error);
     res.status(500).json({ error: "Failed to add problem" });
   } finally {

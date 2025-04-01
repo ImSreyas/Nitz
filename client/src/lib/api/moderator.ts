@@ -20,10 +20,7 @@ export async function addProblem(data: typeof problemSchema._output) {
       moderatorId: userId,
     });
 
-    if (!response.data.success) {
-      throw new Error("Failed to submit problem");
-    }
-    return response.data;
+    return response;
   } catch (error) {
     console.error("Error submitting problem:", error);
   }

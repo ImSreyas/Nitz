@@ -1,12 +1,92 @@
 import pool from "../config/db.js";
 
-export async function getProblem(req, res) {
+export async function getProblems(req, res) {
   try {
-    const { rows } = await pool.query("SELECT * FROM public.tbl_problems");
+    const query = `
+      select 
+        p.id,
+        p.problem_number,
+        p.title as problem_title,
+        p.difficulty,
+        u.username,
+        p.created_at as added_date,
+        p.topics
+      from public.tbl_problems p
+      left join public.tbl_moderators u on p.moderator_id = u.id
+    `;
+    const { rows } = await pool.query(query);
     res.json(rows);
   } catch (error) {
-    console.error("Error fetching problems:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error("error fetching problems:", error);
+    res.status(500).json({ message: "internal server error" });
+  }
+}
+
+export async function getProblem(req, res) {
+  const id = req.query.id;
+  try {
+    const query = `
+      WITH limited_test_cases AS (
+          SELECT 
+              tc.problem_id,
+              jsonb_build_object(
+                  'test_case_id', tc.id,
+                  'input', tc.input,
+                  'output', tc.output,
+                  'explanation', tc.explanation
+              ) AS test_case
+          FROM public.tbl_test_cases tc
+          WHERE tc.problem_id = $1
+          ORDER BY tc.id
+          LIMIT 3
+      )
+
+      SELECT 
+          p.id AS problem_id,
+          p.problem_number,
+          p.title,
+          p.difficulty,
+          p.problem_type,
+          p.competition_mode,
+          p.topics,
+          p.problem_statement,
+          p.constraints,
+          p.time_limit,
+          p.memory_limit,
+          p.input_format,
+          p.output_format,
+          p.moderator_id,
+          p.created_at,
+
+          -- Aggregate test cases from the limited subquery
+          COALESCE(jsonb_agg(DISTINCT lt.test_case), '[]') AS test_cases
+
+      FROM public.tbl_problems p
+
+      -- Join the limited test cases
+      LEFT JOIN limited_test_cases lt 
+          ON p.id = lt.problem_id
+
+      WHERE p.id = $1  
+
+      GROUP BY p.id;
+    `;
+    const { rows } = await pool.query(query, [id]);
+    res.status(200).json({
+      success: true,
+      data: rows,
+    });
+  } catch (error) {
+    // console.log("error fetching problem:", error);
+    if (error.code === "22P02") {
+      res.status(200).json({
+        success: false,
+        errorMessage: "Invalid problem ID",
+        errorCode: error.code,
+      });
+    }
+    // console.error("error fetching problems:", error);
+    res.status(500).json({ message: "internal server error" });
   }
 }
 
@@ -111,7 +191,7 @@ export async function addProblem(req, res) {
     });
   } catch (error) {
     await client.query("ROLLBACK");
-    if (error.code === '23505') {
+    if (error.code === "23505") {
       return res.status(200).json({
         success: false,
         errorCode: error.code,

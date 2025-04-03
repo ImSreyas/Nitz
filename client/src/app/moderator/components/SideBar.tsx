@@ -34,10 +34,22 @@ import {
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 
-export default function ModeratorSidebar() {
+export default function ModeratorSidebar({
+  nonVisiblePaths,
+}: {
+  nonVisiblePaths: string[];
+}) {
   const pathname = usePathname();
 
   const isActive = (path: string) => pathname === path;
+
+  if (
+    nonVisiblePaths.some((path) => {
+      if (pathname.startsWith(path.replace("*", ""))) return true;
+    })
+  ) {
+    return null;
+  }
 
   return (
     <Sidebar className="">

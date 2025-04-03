@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import {
   Tooltip,
@@ -7,7 +9,7 @@ import {
 } from "@/components/ui/tooltip";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Bell, ChevronDown, Lock, Search, Settings, User } from "lucide-react";
-import { Input } from "@/components/ui/input"
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,8 +21,23 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { usePathname } from "next/navigation";
 
-export default function Header() {
+export default function Header({
+  nonVisiblePaths,
+}: {
+  nonVisiblePaths: string[];
+}) {
+  const pathname = usePathname();
+
+  if (
+    nonVisiblePaths.some((path) => {
+      if (pathname.startsWith(path.replace("*", ""))) return true;
+    })
+  ) {
+    return null;
+  }
+
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6">
       <SidebarTrigger />

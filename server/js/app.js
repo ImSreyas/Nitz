@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import problemRoutes from "./src/routes/common/problem.routes.js";
+import modProblemRoutes from "./src/routes/moderator/problem.routes.js";
 import cors from "cors";
 
 dotenv.config();
@@ -15,5 +16,6 @@ app.use(cors({
 app.use(express.json());
 
 app.use("/api/problem", problemRoutes);
+app.use("/api/moderator/problem", modProblemRoutes);
 
 export default app;

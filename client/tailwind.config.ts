@@ -59,7 +59,14 @@ export default {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
-  			}
+  			},
+				difficulty: {
+					beginner: "var(--color-beginner)",
+					easy: "var(--color-easy)",
+					medium: "var(--color-medium)",
+					hard: "var(--color-hard)",
+					complex: "var(--color-complex)",
+				}
   		},
   		borderRadius: {
   			lg: 'var(--radius)',

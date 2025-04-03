@@ -47,6 +47,12 @@ body {
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --color-beginner: #4caf50;
+    --color-easy: #ffc107;
+    --color-medium: #2196f3;
+    --color-hard: #ff5722;
+    --color-complex: #d32f2f;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -84,6 +90,12 @@ body {
       --sidebar-accent-foreground: 0 0% 98%;
       --sidebar-border: 240 3.7% 15.9%;
       --sidebar-ring: 142.4 71.8% 29.2%;
+
+      --color-beginner: #4caf50;
+      --color-easy: #ffc107;
+      --color-medium: #2196f3;
+      --color-hard: #ff5722;
+      --color-complex: #d32f2f;
     }
   }
 }

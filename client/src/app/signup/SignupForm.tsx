@@ -150,147 +150,151 @@ export default function SignupForm() {
   }
 
   return (
-    <Card className="w-full px-20 py-6 rounded-none bg-background">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold text-center">
-          User Sign Up
-        </CardTitle>
-        <CardDescription className="text-center">
-          Create your account
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => {
-              googleAuthSignUp("user");
-            }}
-          >
-            <GoogleIconSVG /> Continue with Google
-          </Button>
-          <Button variant="outline" className="w-full">
-            <Github className="mr-2 h-4 w-4" /> Continue with GitHub
-          </Button>
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or continue with
-              </span>
-            </div>
-          </div>
-          <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                {...register("email")}
-                placeholder="demo@example.com"
-              />
-              {errors.email && errorComponent(errors.email.message || "")}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                {...register("username")}
-                placeholder="demo"
-              />
-              {errors.username && errorComponent(errors.username.message || "")}
-            </div>
-            <div className="space-y-2">
-              <div className="flex relative items-center space-x-2">
-                <Label htmlFor="password">Password</Label>
-                <button
-                  ref={infoButtonRef}
-                  type="button"
-                  onClick={() => {
-                    setShowPasswordInfo((state) => !state);
-                  }}
-                  className="text-muted-foreground"
-                >
-                  <Info className="" size={14} />
-                </button>
-                {showPasswordInfo && (
-                  <Card
-                    ref={infoRef}
-                    className="absolute w-full h-fit top-7 left-10 -translate-x-2 p-4"
-                  >
-                    <CardContent className="p-0">
-                      <p className="text-sm">
-                        Password must be at least 6 characters long, include at
-                        least one uppercase letter, one number, and one special
-                        character.
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-              <Input
-                id="password"
-                type="password"
-                {...register("password")}
-                placeholder="******"
-              />
-              {errors.password && errorComponent(errors.password.message || "")}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                {...register("confirmPassword")}
-              />
-              {errors.confirmPassword &&
-                errorComponent(errors.confirmPassword.message || "")}
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing Up..." : "Sign Up"}
+    <div className="flex items-center h-full">
+      <Card className="w-full px-20 py-6 rounded-none bg-background border-none">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-center">
+            User Sign Up
+          </CardTitle>
+          <CardDescription className="text-center">
+            Create your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                googleAuthSignUp("user");
+              }}
+            >
+              <GoogleIconSVG /> Continue with Google
             </Button>
-          </form>
-          <div>
-            <div className="mt-4 text-center text-sm">
-              Already have an account?{" "}
-              <a
-                href="/login"
-                className="underline underline-offset-4 hover:text-primary"
-              >
-                Login
-              </a>
+            <Button variant="outline" className="w-full">
+              <Github className="mr-2 h-4 w-4" /> Continue with GitHub
+            </Button>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or continue with
+                </span>
+              </div>
             </div>
-            <div className="text-center text-sm mt-2 text-muted-foreground">
-              Become a new moderator?{" "}
-              <a
-                href="/mod-signup"
-                className="underline underline-offset-4 hover:text-primary"
-              >
-                Signup
-              </a>
+            <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  {...register("email")}
+                  placeholder="demo@example.com"
+                />
+                {errors.email && errorComponent(errors.email.message || "")}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  {...register("username")}
+                  placeholder="demo"
+                />
+                {errors.username &&
+                  errorComponent(errors.username.message || "")}
+              </div>
+              <div className="space-y-2">
+                <div className="flex relative items-center space-x-2">
+                  <Label htmlFor="password">Password</Label>
+                  <button
+                    ref={infoButtonRef}
+                    type="button"
+                    onClick={() => {
+                      setShowPasswordInfo((state) => !state);
+                    }}
+                    className="text-muted-foreground"
+                  >
+                    <Info className="" size={14} />
+                  </button>
+                  {showPasswordInfo && (
+                    <Card
+                      ref={infoRef}
+                      className="absolute w-full h-fit top-7 left-10 -translate-x-2 p-4"
+                    >
+                      <CardContent className="p-0">
+                        <p className="text-sm">
+                          Password must be at least 6 characters long, include
+                          at least one uppercase letter, one number, and one
+                          special character.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  {...register("password")}
+                  placeholder="******"
+                />
+                {errors.password &&
+                  errorComponent(errors.password.message || "")}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  {...register("confirmPassword")}
+                />
+                {errors.confirmPassword &&
+                  errorComponent(errors.confirmPassword.message || "")}
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Signing Up..." : "Sign Up"}
+              </Button>
+            </form>
+            <div>
+              <div className="mt-4 text-center text-sm">
+                Already have an account?{" "}
+                <a
+                  href="/login"
+                  className="underline underline-offset-4 hover:text-primary"
+                >
+                  Login
+                </a>
+              </div>
+              <div className="text-center text-sm mt-2 text-muted-foreground">
+                Become a new moderator?{" "}
+                <a
+                  href="/mod-signup"
+                  className="underline underline-offset-4 hover:text-primary"
+                >
+                  Signup
+                </a>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="mt-6 text-center text-sm text-muted-foreground">
-          By signing up, you agree to our{" "}
-          <a
-            href="#"
-            className="underline underline-offset-4 hover:text-primary"
-          >
-            Terms of Service
-          </a>{" "}
-          and{" "}
-          <a
-            href="#"
-            className="underline underline-offset-4 hover:text-primary"
-          >
-            Privacy Policy
-          </a>
-          .
-        </div>
-      </CardContent>
-    </Card>
+          <div className="mt-6 text-center text-sm text-muted-foreground">
+            By signing up, you agree to our{" "}
+            <a
+              href="#"
+              className="underline underline-offset-4 hover:text-primary"
+            >
+              Terms of Service
+            </a>{" "}
+            and{" "}
+            <a
+              href="#"
+              className="underline underline-offset-4 hover:text-primary"
+            >
+              Privacy Policy
+            </a>
+            .
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

@@ -13,7 +13,7 @@ export default function ProblemStatement({
   difficulty,
 }: {
   problem: string;
-  problemNum: string;
+  problemNum: number;
   problemTitle: string;
   difficulty: string;
 }) {

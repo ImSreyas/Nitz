@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProblemStatement from "./ProblemStatement";
-import CodeEditor, { SupportedLang } from "./CodeEditor";
+import CodeEditor from "./CodeEditor";
 import TestCaseInput from "./TestCaseInput";
 import ExecutionOutput from "./ExecutionOutput";
 import {
@@ -37,7 +37,7 @@ type Problem = {
   test_cases: TestCase[];
 };
 
-type TestCase = {
+export type TestCase = {
   test_case_id: string;
   input: string;
   output: string;
@@ -52,6 +52,7 @@ export default function ProblemPage({ problemId }: { problemId: string }) {
     executionTime: "",
     hasError: false,
   });
+  const [testResult, setTestResult] = useState({});
 
   useEffect(() => {
     const fetchProblemData = async () => {
@@ -68,14 +69,6 @@ export default function ProblemPage({ problemId }: { problemId: string }) {
     fetchProblemData();
   }, [problemId]);
 
-  const handleExecute = () => {
-    setOutput({
-      result: "Test Execution Result",
-      executionTime: `${Math.floor(Math.random() * 100)}ms`,
-      hasError: false,
-    });
-  };
-
   const handleSubmit = () => {
     setOutput({
       result: "Accepted",
@@ -87,7 +80,7 @@ export default function ProblemPage({ problemId }: { problemId: string }) {
   if (!problem) return <div>Loading...</div>;
 
   return (
-    <ResizablePanelGroup direction="horizontal" className="min-h-screen gap-2">
+    <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-6rem)] gap-2">
       <ResizablePanel defaultSize={50} minSize={30}>
         <ProblemStatement
           problem={problem.problem_statement}
@@ -100,24 +93,21 @@ export default function ProblemPage({ problemId }: { problemId: string }) {
       <ResizablePanel defaultSize={50} minSize={30}>
         <ResizablePanelGroup direction="vertical" className="gap-2">
           <ResizablePanel defaultSize={50} minSize={20}>
-            <CodeEditor onExecute={handleExecute} onSubmit={handleSubmit} />
+            <CodeEditor problemId={problemId} onSubmit={handleSubmit} setTestResult={setTestResult} />
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={50} minSize={20}>
-            <div className="h-full p-5 bg-card rounded-sm">
+            <div className="h-full p-5 bg-card rounded-sm overflow-y-scroll">
               <Tabs defaultValue="test-case" className="h-full">
-                <TabsList>
+                <TabsList className=""> 
                   <TabsTrigger value="test-case">Test Case</TabsTrigger>
                   <TabsTrigger value="test-result">Test Result</TabsTrigger>
                 </TabsList>
                 <TabsContent value="test-case" className="h-full overflow-auto">
-                  <TestCaseInput
-                    testCase={testCase}
-                    setTestCase={setTestCase}
-                  />
+                  <TestCaseInput testCases={testCase} />
                 </TabsContent>
                 <TabsContent value="test-result">
-                  <ExecutionOutput output={output} />
+                  <ExecutionOutput testResult={testResult} output={output} />
                 </TabsContent>
               </Tabs>
             </div>

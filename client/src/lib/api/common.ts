@@ -9,3 +9,20 @@ export async function getAllProblems() {
     console.error("Error submitting problem:", error);
   }
 }
+
+export async function executeCode(
+  problemId: string,
+  language: string,
+  code: string
+) {
+  try {
+    const response = await axios.post(`${baseUrl}/api/code/execute`, {
+      problemId,
+      language,
+      code,
+    });
+    return response;
+  } catch (error) {
+    console.error("Error executing code:", error);
+  }
+}

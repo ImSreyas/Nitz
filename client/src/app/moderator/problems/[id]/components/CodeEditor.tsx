@@ -12,41 +12,109 @@ import {
 import { Play, Send } from "lucide-react";
 import { useEffect, useState } from "react";
 import MonacoEditor from "@monaco-editor/react";
+import { getStarterCode } from "@/lib/api/moderator";
+import { executeCode } from "@/lib/api/common";
 
-export interface SupportedLang {
+type SupportedLanguage = {
+  language_id: string;
   name: string;
   version: string;
-  user_code: string;
-  language_id: string;
-}
+  user_code: string | null;
+};
+
+type ProblemLanguagesResponse = {
+  success: boolean;
+  data: SupportedLanguage[];
+};
 
 interface CodeEditorProps {
-  onExecute: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  setTestResult: React.Dispatch<React.SetStateAction<any>>;
+  problemId: string;
   onSubmit: () => void;
 }
 
-export default function CodeEditor({ onExecute, onSubmit }: CodeEditorProps) {
-  const languages = ["javascript", "python", "java", "cpp", "rust"];
+type Code = {
+  python: string;
+  javascript: string;
+  java: string;
+  cpp: string;
+};
 
-  const [language, setLanguage] = useState(selectedLanguage);
+export default function CodeEditor({
+  problemId,
+  onSubmit,
+  setTestResult,
+}: CodeEditorProps) {
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("");
+  const [starterCodes, setStarterCodes] = useState<SupportedLanguage[] | null>(
+    null
+  );
+  const [code, setCode] = useState<Code>({
+    python: "",
+    javascript: "",
+    java: "",
+    cpp: "",
+  });
 
-  // Update the Monaco language whenever the selected language changes
+  const handleExecute = async () => {
+    const currentCode = code[selectedLanguage.toLowerCase() as keyof Code];
+    console.log(selectedLanguage, currentCode);
+    const result = await executeCode(problemId, selectedLanguage, currentCode);
+    setTestResult(result?.data)
+  };
+
   useEffect(() => {
-    setLanguage(selectedLanguage.toLowerCase());
-  }, [selectedLanguage]);
+    const getData = async () => {
+      const result = await getStarterCode(problemId);
+      if (result?.data) {
+        const data: ProblemLanguagesResponse = result.data;
+        if (data.success) {
+          setStarterCodes(data.data);
+
+          if (data.data.length > 0) {
+            setSelectedLanguage(data.data[0].name);
+
+            const initialCodeState = data.data.reduce((acc, item) => {
+              acc[item.name.toLowerCase() as keyof Code] = item.user_code || "";
+              return acc;
+            }, {} as Code);
+
+            setCode(initialCodeState);
+          }
+        }
+      }
+    };
+
+    getData();
+  }, [problemId]);
 
   return (
     <Card className="h-full border rounded-lg">
       <CardContent className="p-0 h-full flex flex-col">
         <div className="flex items-center justify-between p-4 border-b">
-          <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+          <Select
+            value={selectedLanguage}
+            onValueChange={(value) => setSelectedLanguage(value)}
+            defaultValue={starterCodes?.[0]?.name}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select Language" />
             </SelectTrigger>
             <SelectContent>
-              {languages.map((lang) => (
-                <SelectItem key={lang} value={lang}>
-                  {lang.charAt(0).toUpperCase() + lang.slice(1)}
+              {starterCodes?.map((starterCode: SupportedLanguage, index) => (
+                <SelectItem
+                  key={starterCode.language_id}
+                  value={starterCode.name}
+                  defaultChecked={index == 0}
+                  onClick={() => {
+                    if (index === 0 && !selectedLanguage) {
+                      setSelectedLanguage(starterCode.name);
+                    }
+                  }}
+                >
+                  {starterCode.name.charAt(0).toUpperCase() +
+                    starterCode.name.slice(1)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -55,7 +123,7 @@ export default function CodeEditor({ onExecute, onSubmit }: CodeEditorProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={onExecute}
+              onClick={handleExecute}
               className="flex items-center gap-1"
             >
               <Play className="h-4 w-4" />
@@ -74,18 +142,23 @@ export default function CodeEditor({ onExecute, onSubmit }: CodeEditorProps) {
         <div className="flex-1 overflow-hidden">
           <MonacoEditor
             height="100%"
-            language={language} // Dynamically set the language
-            value={code}
-            theme="vs-dark" // Use the dark theme
+            language={selectedLanguage.toLowerCase()}
+            value={code[selectedLanguage.toLowerCase() as keyof Code]}
+            theme="vs-dark"
             options={{
               fontSize: 14,
-              minimap: { enabled: false }, // Disable the minimap
+              minimap: { enabled: false },
               scrollBeyondLastLine: false,
               wordWrap: "on",
               automaticLayout: true,
-              lineNumbers: "on", // Show line numbers
+              lineNumbers: "on",
             }}
-            onChange={(value) => setCode(value || "")} // Update the code state
+            onChange={(value) =>
+              setCode((state) => ({
+                ...state,
+                [selectedLanguage.toLowerCase() as keyof Code]: value,
+              }))
+            }
           />
         </div>
       </CardContent>

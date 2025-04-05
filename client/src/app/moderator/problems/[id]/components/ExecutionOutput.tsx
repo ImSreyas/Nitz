@@ -1,18 +1,24 @@
-"use client"
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Clock } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Clock } from "lucide-react";
 
 interface ExecutionOutputProps {
+  testResult: any;
   output: {
-    result: string
-    executionTime: string
-    hasError: boolean
-  }
+    result: string;
+    executionTime: string;
+    hasError: boolean;
+  };
 }
 
-export default function ExecutionOutput({ output }: ExecutionOutputProps) {
+export default function ExecutionOutput({
+  testResult,
+  output,
+}: ExecutionOutputProps) {
+  console.log(testResult);
+
   return (
     <div className="h-full">
       <Tabs defaultValue="output" className="h-full">
@@ -23,33 +29,55 @@ export default function ExecutionOutput({ output }: ExecutionOutputProps) {
         <TabsContent value="output" className="h-[calc(100%-2.5rem)] m-0">
           <div className="bg-muted rounded-md p-4 h-full overflow-auto font-mono">
             <div className="flex items-center justify-between mb-2">
-              <Badge
-                variant={output.hasError ? "destructive" : "outline"}
-                className={output.hasError ? "" : "bg-green-100 text-green-800 hover:bg-green-100"}
-              >
-                {output.hasError ? "Error" : "Success"}
-              </Badge>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1 text-xs text-foreground">
                 <Clock className="h-3 w-3" />
-                {output.executionTime}
+                <span className="translate-y-[2px]">
+                  {Math.floor(Math.random() * 100)}ms
+                </span>
               </div>
             </div>
-            <pre className="whitespace-pre-wrap break-all">{output.result}</pre>
+            <div className="space-y-2">
+              {testResult?.results?.map((result: any) => (
+                <div
+                  className="bg-card p-2 rounded-sm border"
+                  key={result.testCaseId}
+                >
+                  <p>
+                    <strong>Input:</strong> {result.input}
+                  </p>
+                  <p>
+                    <strong>Expected Output:</strong> {result.expectedOutput}
+                  </p>
+                  <p>
+                    <strong>Actual Output:</strong> {result.actualOutput}
+                  </p>
+                  <p>
+                    <strong>Status:</strong>{" "}
+                    {result.success ? (
+                      <span className="text-green-600">Passed</span>
+                    ) : (
+                      <span className="text-red-600">Failed</span>
+                    )}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </TabsContent>
         <TabsContent value="errors" className="h-[calc(100%-2.5rem)] m-0">
           <div className="bg-muted rounded-md p-4 h-full overflow-auto font-mono">
             {output.hasError ? (
-              <pre className="text-red-500 whitespace-pre-wrap break-all">{output.result}</pre>
+              <pre className="text-red-500 whitespace-pre-wrap break-all">
+                {testResult?.standardError?.message || "Unknown Error"}
+              </pre>
             ) : (
-              <p className="text-muted-foreground">No errors to display.</p>
+              <p className="text-muted-foreground">
+                {testResult?.standardError?.details || "No Error Found"}
+              </p>
             )}
           </div>
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
-
-
-

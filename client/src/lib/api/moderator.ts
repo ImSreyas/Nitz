@@ -37,3 +37,14 @@ export async function getProblem(id: string) {
     console.log("Error fetching problem:", error);
   }
 }
+
+export async function getStarterCode(id: string) {
+  try {
+    const response = await axios.get(
+      `${baseUrl}/api/moderator/problem/starter-code?id=${id}`
+    );
+    return response;
+  } catch (error) {
+    console.log("Error fetching starter code:", error);
+  }
+}

@@ -135,7 +135,6 @@ export async function getStarterCode(req, res) {
   }
 }
 
-
 export async function addProblem(req, res) {
   console.log(req.body);
   const client = await pool.connect();
@@ -248,5 +247,65 @@ export async function addProblem(req, res) {
     res.status(500).json({ error: "Failed to add problem" });
   } finally {
     client.release();
+  }
+}
+
+export async function deleteProblem(req, res) {
+  const id = req.query.id;
+  try {
+    const query = `
+      UPDATE public.tbl_problems
+      SET is_deleted = true
+      WHERE id = $1
+    `;
+    await pool.query(query, [id]);
+    res.status(200).json({
+      success: true,
+      message: "Problem deleted successfully",
+    });
+  } catch (error) {
+    console.error("error deleting problem:", error);
+    res.status(200).json({ success: false, message: "internal server error" });
+  }
+}
+
+export async function getPublishStatus(req, res) {
+  const id = req.query.id;
+  try {
+    const query = `
+      SELECT 
+        p.publish_status
+      FROM public.tbl_problems p
+      WHERE p.id = $1
+    `;
+    const { rows } = await pool.query(query, [id]);
+    res.status(200).json({
+      success: true,
+      data: {
+        status: rows[0].publish_status,
+      },
+    });
+  } catch (error) {
+    console.error("error fetching publish status:", error);
+    res.status(200).json({ success: false, message: "internal server error" });
+  }
+}
+
+export async function setPublishStatus(req, res) {
+  const { problemId, status } = req.body;
+  try {
+    const query = `
+      UPDATE public.tbl_problems
+      SET publish_status = $1
+      WHERE id = $2
+    `;
+    await pool.query(query, [status == "published" ? true : false, problemId]);
+    res.status(200).json({
+      success: true,
+      message: "Publish status updated successfully",
+    });
+  } catch (error) {
+    console.error("error updating publish status:", error);
+    res.status(200).json({ success: false, message: "internal server error" });
   }
 }

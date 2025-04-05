@@ -18,14 +18,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useEffect, useState } from "react";
-import {
-  deleteProblem,
-  getPublishStatus,
-  setPublishStatus,
-} from "@/lib/api/moderator";
+import { deleteProblem } from "@/lib/api/moderator";
 import { toast } from "sonner";
 import { redirect } from "next/navigation";
-import UpdateProblemDialog from "./UpdateProblemDialog";
 
 type PublishStatus = "unpublished" | "published";
 type ProblemStatementType = {
@@ -75,44 +70,19 @@ export default function ProblemStatement({
 }: ProblemStatementType) {
   const [status, setStatus] = useState<PublishStatus>("unpublished");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false); // State for update dialog
 
   useEffect(() => {
     const fetchPublishStatus = async () => {
-      const result = await getPublishStatus(problemId);
-      if (result) {
-        if (result.data) {
-          const data = result.data;
-          if (data?.success) {
-            const fetchedStatus = data?.data?.status
-              ? "published"
-              : "unpublished";
-            setStatus(fetchedStatus);
-          } else {
-            toast.error("Something went wrong", { position: "top-right" });
-          }
-        }
-      }
+      const fetchedStatus = "published";
+      setStatus(fetchedStatus);
     };
 
     fetchPublishStatus();
-  }, [problemId]);
+  }, []);
 
-  const handleStatusChange = async (value: PublishStatus) => {
+  const handleStatusChange = (value: PublishStatus) => {
     setStatus(value);
-    const result = await setPublishStatus(problemId, value);
-    if (result) {
-      if (result?.data) {
-        const data = result.data;
-        if (data?.success) {
-          toast.success("Status updated successfully", {
-            position: "top-right",
-          });
-        } else {
-          toast.error("Something went wrong", { position: "top-right" });
-        }
-      }
-    }
+    console.log("Selected status:", value);
   };
 
   const handleDelete = async () => {
@@ -176,11 +146,7 @@ export default function ProblemStatement({
                 <SelectItem value="published">Published</SelectItem>
               </SelectContent>
             </Select>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setIsUpdateDialogOpen(true)} // Open update dialog
-            >
+            <Button variant="outline" size="icon">
               <RefreshCcw className="h-4 w-4" />
             </Button>
             <Button
@@ -258,24 +224,6 @@ export default function ProblemStatement({
         </CardContent>
       </Card>
 
-      {/* Bottom Section */}
-      <div className="relative w-full bottom-0 left-0 border-t bg-card p-4 text-xs flex justify-between items-center">
-        <div className="flex items-center gap-4 w-full">
-          <div className="flex items-center gap-2">
-            <Cpu className="h-4 w-4 text-muted-foreground" />
-            <span>
-              <strong>Memory Limit:</strong> {memoryLimit} MB
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Cpu className="h-4 w-4 text-muted-foreground" />
-            <span>
-              <strong>Time Limit:</strong> {timeLimit} seconds
-            </span>
-          </div>
-        </div>
-      </div>
-
       {/* Dialog for Delete Confirmation */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
@@ -299,12 +247,23 @@ export default function ProblemStatement({
         </DialogContent>
       </Dialog>
 
-      {/* Dialog for Update Problem */}
-      <UpdateProblemDialog
-        isOpen={isUpdateDialogOpen}
-        onClose={() => setIsUpdateDialogOpen(false)}
-        problemId={problemId}
-      />
+      {/* Bottom Section */}
+      <div className="relative w-full bottom-0 left-0 border-t bg-card p-4 text-xs flex justify-between items-center">
+        <div className="flex items-center gap-4 w-full">
+          <div className="flex items-center gap-2">
+            <Cpu className="h-4 w-4 text-muted-foreground" />
+            <span>
+              <strong>Memory Limit:</strong> {memoryLimit} MB
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Cpu className="h-4 w-4 text-muted-foreground" />
+            <span>
+              <strong>Time Limit:</strong> {timeLimit} seconds
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

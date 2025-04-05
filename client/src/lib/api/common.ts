@@ -23,6 +23,17 @@ export async function executeCode(
     });
     return response;
   } catch (error) {
-    console.error("Error executing code:", error);
+    console.log("Error executing code:", error);
+  }
+}
+
+export async function getStarterCode(id: string) {
+  try {
+    const response = await axios.get(
+      `${baseUrl}/api/code/starter-code?id=${id}`
+    );
+    return response;
+  } catch (error) {
+    console.log("Error fetching starter code:", error);
   }
 }

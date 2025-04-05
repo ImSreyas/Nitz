@@ -67,7 +67,11 @@ export async function executeCode(req, res) {
           testCaseId: testCase.id,
           input: testCase.input,
           expectedOutput: testCase.output,
-          actualOutput: result.output,
+          actualOutput: result.output !== undefined 
+            ? result.output 
+            : result.success 
+              ? testCase.output.trim() 
+              : "Unknown",
           success: result.success,
           error: result.error || null,
         });

@@ -20,6 +20,6 @@ app.use(express.json());
 
 app.use("/api/problem", problemRoutes);
 app.use("/api/moderator/problem", modProblemRoutes);
-app.use("/api/code/execute", codeRoute);
+app.use("/api/code/", codeRoute);
 
 export default app;

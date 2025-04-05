@@ -62,7 +62,7 @@ export async function runCode(language, code, params = "") {
 
         return resolve({
           success: stdout.trim()[0] === "1",
-          output: stdout.trim(),
+          output: stdout.trim().split(":").slice(1).join(" "),
           error: stderr.trim(),
         });
       });

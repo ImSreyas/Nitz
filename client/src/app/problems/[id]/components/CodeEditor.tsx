@@ -9,18 +9,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Play, Send, ListRestart } from "lucide-react";
+import { Play, Send } from "lucide-react";
 import { useEffect, useState } from "react";
 import MonacoEditor from "@monaco-editor/react";
 import { getStarterCode } from "@/lib/api/common";
 import { executeCode } from "@/lib/api/common";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 type SupportedLanguage = {
   language_id: string;
@@ -63,28 +56,13 @@ export default function CodeEditor({
     java: "",
     cpp: "",
   });
-  const [codeType, setCodeType] = useState<"user_code" | "logic_code">(
-    "user_code"
-  );
 
   const handleExecute = async () => {
     const currentCode = code[selectedLanguage.toLowerCase() as keyof Code];
+    // console.log(selectedLanguage, currentCode);
     const result = await executeCode(problemId, selectedLanguage, currentCode);
     console.log(result);
     setTestResult(result?.data);
-  };
-
-  const handleResetCode = () => {
-    // const initialCode =
-    //   starterCodes?.find(
-    //     (starterCode) =>
-    //       starterCode.name.toLowerCase() === selectedLanguage.toLowerCase()
-    //   )?.[codeType] || "";
-    // setCode((prev) => ({
-    //   ...prev,
-    //   [selectedLanguage.toLowerCase() as keyof Code]: initialCode,
-    // }));
-    // console.log(`Code reset for ${codeType}`);
   };
 
   useEffect(() => {
@@ -116,85 +94,32 @@ export default function CodeEditor({
     <Card className="h-full border rounded-lg">
       <CardContent className="p-0 h-full flex flex-col">
         <div className="flex items-center justify-between p-4 border-b">
-          <div className="flex gap-3 items-center">
-            <Select
-              value={selectedLanguage}
-              onValueChange={(value) => setSelectedLanguage(value)}
-              defaultValue={starterCodes?.[0]?.name}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select Language" />
-              </SelectTrigger>
-              <SelectContent>
-                {starterCodes?.map((starterCode: SupportedLanguage, index) => (
-                  <SelectItem
-                    key={starterCode.language_id}
-                    value={starterCode.name}
-                    defaultChecked={index == 0}
-                    onClick={() => {
-                      if (index === 0 && !selectedLanguage) {
-                        setSelectedLanguage(starterCode.name);
-                      }
-                    }}
-                  >
-                    {starterCode.name.charAt(0).toUpperCase() +
-                      starterCode.name.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <div className="flex items-center gap-2">
-              <ToggleGroup
-                type="single"
-                value={codeType}
-                onValueChange={(value) =>
-                  value && setCodeType(value as "user_code" | "logic_code")
-                }
-                className="flex gap-0"
-              >
-                <ToggleGroupItem
-                  value="user_code"
-                  className={`px-4 py-2 text-xs border !rounded-md font-semibold !rounded-r-none ${
-                    codeType === "user_code"
-                      ? "!bg-primary !text-primary-foreground"
-                      : ""
-                  }`}
+          <Select
+            value={selectedLanguage}
+            onValueChange={(value) => setSelectedLanguage(value)}
+            defaultValue={starterCodes?.[0]?.name}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select Language" />
+            </SelectTrigger>
+            <SelectContent>
+              {starterCodes?.map((starterCode: SupportedLanguage, index) => (
+                <SelectItem
+                  key={starterCode.language_id}
+                  value={starterCode.name}
+                  defaultChecked={index == 0}
+                  onClick={() => {
+                    if (index === 0 && !selectedLanguage) {
+                      setSelectedLanguage(starterCode.name);
+                    }
+                  }}
                 >
-                  UserCode
-                </ToggleGroupItem>
-                <ToggleGroupItem
-                  value="logic_code"
-                  className={`px-4 py-2 text-xs !rounded-md font-semibold !rounded-l-none border ${
-                    codeType === "logic_code"
-                      ? "!bg-primary !text-primary-foreground"
-                      : ""
-                  }`}
-                >
-                  LogicCode
-                </ToggleGroupItem>
-              </ToggleGroup>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleResetCode}
-                      className="flex items-center justify-center"
-                    >
-                      <ListRestart className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-background text-foreground border">
-                    Reset{" "}
-                    {codeType === "user_code" ? "User Code" : "Logic Code"}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
-
+                  {starterCode.name.charAt(0).toUpperCase() +
+                    starterCode.name.slice(1)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <div className="flex gap-2">
             <Button
               variant="outline"

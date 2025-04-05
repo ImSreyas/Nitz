@@ -12,7 +12,7 @@ export async function addProblem(data: typeof problemSchema._output) {
     const userId = user.data?.user?.id;
 
     if (!userId) {
-      console.error("User ID not found.");
+      console.log("User ID not found.");
       return;
     }
 
@@ -23,7 +23,7 @@ export async function addProblem(data: typeof problemSchema._output) {
 
     return response;
   } catch (error) {
-    console.error("Error submitting problem:", error);
+    console.log("Error submitting problem:", error);
   }
 }
 
@@ -38,13 +38,40 @@ export async function getProblem(id: string) {
   }
 }
 
-export async function getStarterCode(id: string) {
+export async function deleteProblem(id: string) {
+  try {
+    const response = await axios.delete(`${baseUrl}/api/problem?id=${id}`);
+    return response;
+  } catch (error) {
+    console.log("Error deleting problem:", error);
+  }
+}
+
+export async function getPublishStatus(problemId: string) {
   try {
     const response = await axios.get(
-      `${baseUrl}/api/moderator/problem/starter-code?id=${id}`
+      `${baseUrl}/api/moderator/problem/publish-status?id=${problemId}`
     );
     return response;
   } catch (error) {
-    console.log("Error fetching starter code:", error);
+    console.log("Error fetching publish status:", error);
+  }
+}
+
+export async function setPublishStatus(
+  problemId: string,
+  status: "published" | "unpublished"
+) {
+  try {
+    const response = await axios.post(
+      `${baseUrl}/api/moderator/problem/publish-status`,
+      {
+        problemId,
+        status,
+      }
+    );
+    return response;
+  } catch (error) {
+    console.log("Error setting publish status:", error);
   }
 }

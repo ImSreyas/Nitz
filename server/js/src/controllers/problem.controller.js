@@ -90,50 +90,6 @@ export async function getProblem(req, res) {
   }
 }
 
-export async function getStarterCode(req, res) {
-  const id = req.query.id;
-  try {
-    const query = `
-      SELECT 
-      COALESCE(jsonb_agg(DISTINCT jsonb_build_object(
-          'language_id', pl.id,
-          'name', pl.name,
-          'version', pl.version,
-          'user_code', sc.user_code
-      )) FILTER (WHERE pl.id IS NOT NULL), '[]') AS supported_languages
-
-      FROM public.tbl_problems p
-
-      -- Join allowed languages and programming languages
-      LEFT JOIN public.tbl_allowed_languages al 
-          ON p.id = al.problem_id
-      LEFT JOIN public.tbl_programming_languages pl 
-          ON al.language_id = pl.id
-
-      -- Join starter code (fetching only user_code)
-      LEFT JOIN public.tbl_starter_code sc 
-          ON p.id = sc.problem_id AND pl.id = sc.language_id
-
-      WHERE p.id = $1;
-    `;
-    const { rows } = await pool.query(query, [id]);
-    res.status(200).json({
-      success: true,
-      data: rows[0].supported_languages,
-    });
-  } catch (error) {
-    // console.log("error fetching problem:", error);
-    if (error.code === "22P02") {
-      res.status(200).json({
-        success: false,
-        errorMessage: "Invalid problem ID",
-        errorCode: error.code,
-      });
-    }
-    // console.error("error fetching problems:", error);
-    res.status(500).json({ message: "internal server error" });
-  }
-}
 
 export async function addProblem(req, res) {
   console.log(req.body);

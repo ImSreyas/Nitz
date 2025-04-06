@@ -75,3 +75,25 @@ export async function setPublishStatus(
     console.log("Error setting publish status:", error);
   }
 }
+
+export async function updateStarterCode(
+ problemId: string,
+ selectedLanguage: string, 
+ codeType: string, 
+ code: string 
+){
+  try {
+    const response = await axios.post(
+      `${baseUrl}/api/moderator/code/starter-code`,
+      {
+        problemId,
+        selectedLanguage,
+        codeType,
+        code,
+      }
+    );
+    return response;
+  } catch (error) {
+    console.log("Error updating starter code:", error);
+  }
+}

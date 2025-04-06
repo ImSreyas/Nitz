@@ -13,13 +13,15 @@ export async function getAllProblems() {
 export async function executeCode(
   problemId: string,
   language: string,
-  code: string
+  userCode: string,
+  logicCode: string
 ) {
   try {
     const response = await axios.post(`${baseUrl}/api/code/execute`, {
       problemId,
       language,
-      code,
+      userCode,
+      logicCode,
     });
     return response;
   } catch (error) {
@@ -30,7 +32,7 @@ export async function executeCode(
 export async function getStarterCode(id: string) {
   try {
     const response = await axios.get(
-      `${baseUrl}/api/code/starter-code?id=${id}`
+      `${baseUrl}/api/moderator/code/starter-code?id=${id}`
     );
     return response;
   } catch (error) {

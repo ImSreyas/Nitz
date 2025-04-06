@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { executeCode } from "../../controllers/code.controller.js";
-import { getStarterCode } from "../../controllers/problem.controller.js";
+import { getStarterCode } from "../../controllers/code.controller.js";
 
 const router = Router();
 

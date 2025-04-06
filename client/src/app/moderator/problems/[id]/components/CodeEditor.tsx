@@ -12,8 +12,8 @@ import {
 import { Play, Send, ListRestart } from "lucide-react";
 import { useEffect, useState } from "react";
 import MonacoEditor from "@monaco-editor/react";
-import { getStarterCode } from "@/lib/api/common";
-import { executeCode } from "@/lib/api/common";
+import { getStarterCode, executeCode } from "@/lib/api/common";
+import { updateStarterCode } from "@/lib/api/moderator";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Tooltip,
@@ -21,12 +21,23 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { DialogOverlay } from "@radix-ui/react-dialog";
+import { Spinner } from "@/components/ui/spinner";
 
 type SupportedLanguage = {
   language_id: string;
   name: string;
   version: string;
   user_code: string | null;
+  logic_code: string | null;
 };
 
 type ProblemLanguagesResponse = {
@@ -37,73 +48,171 @@ type ProblemLanguagesResponse = {
 interface CodeEditorProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setTestResult: React.Dispatch<React.SetStateAction<any>>;
+  executingState: [boolean, React.Dispatch<React.SetStateAction<boolean>>];
   problemId: string;
-  onSubmit: () => void;
+  onSubmit?: () => void;
 }
 
+type CodeLanguages = {
+  python?: string;
+  javascript?: string;
+  java?: string;
+  cpp?: string;
+};
+
 type Code = {
-  python: string;
-  javascript: string;
-  java: string;
-  cpp: string;
+  userCode: CodeLanguages;
+  logicCode: CodeLanguages;
 };
 
 export default function CodeEditor({
   problemId,
-  onSubmit,
   setTestResult,
+  executingState,
 }: CodeEditorProps) {
-  const [selectedLanguage, setSelectedLanguage] = useState<string>("");
+  const [selectedLanguage, setSelectedLanguage] =
+    useState<keyof CodeLanguages>("python");
   const [starterCodes, setStarterCodes] = useState<SupportedLanguage[] | null>(
     null
   );
+  const [initialCode, setInitialCode] = useState<Code>({
+    userCode: {
+      python: "",
+      javascript: "",
+      java: "",
+      cpp: "",
+    },
+    logicCode: {
+      python: "",
+      javascript: "",
+      java: "",
+      cpp: "",
+    },
+  });
+
   const [code, setCode] = useState<Code>({
-    python: "",
-    javascript: "",
-    java: "",
-    cpp: "",
+    userCode: {
+      python: "",
+      javascript: "",
+      java: "",
+      cpp: "",
+    },
+    logicCode: {
+      python: "",
+      javascript: "",
+      java: "",
+      cpp: "",
+    },
   });
   const [codeType, setCodeType] = useState<"user_code" | "logic_code">(
     "user_code"
   );
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
+  const [isExecuting, setIsExecuting] = executingState;
 
   const handleExecute = async () => {
-    const currentCode = code[selectedLanguage.toLowerCase() as keyof Code];
-    const result = await executeCode(problemId, selectedLanguage, currentCode);
-    console.log(result);
+    setIsExecuting(true);
+    const currentUserCode =
+      code?.userCode[selectedLanguage.toLowerCase() as keyof CodeLanguages];
+    const currentLogicCode =
+      code?.logicCode[selectedLanguage.toLowerCase() as keyof CodeLanguages];
+    const result = await executeCode(
+      problemId,
+      selectedLanguage,
+      currentUserCode || "",
+      currentLogicCode || ""
+    );
     setTestResult(result?.data);
+    setIsExecuting(false);
   };
 
-  const handleResetCode = () => {
-    // const initialCode =
-    //   starterCodes?.find(
-    //     (starterCode) =>
-    //       starterCode.name.toLowerCase() === selectedLanguage.toLowerCase()
-    //   )?.[codeType] || "";
-    // setCode((prev) => ({
-    //   ...prev,
-    //   [selectedLanguage.toLowerCase() as keyof Code]: initialCode,
-    // }));
-    // console.log(`Code reset for ${codeType}`);
+  const handleConfirmReset = () => {
+    setCode((state: Code) => ({
+      ...state,
+      [(codeType === "user_code" ? "userCode" : "logicCode") as keyof Code]: {
+        ...state[
+          (codeType === "user_code" ? "userCode" : "logicCode") as keyof Code
+        ],
+        [selectedLanguage.toLowerCase() as keyof CodeLanguages]:
+          initialCode[
+            (codeType === "user_code" ? "userCode" : "logicCode") as keyof Code
+          ][selectedLanguage.toLowerCase() as keyof CodeLanguages] || "",
+      },
+    }));
+    setIsResetDialogOpen(false);
+  };
+
+  const handleConfirmUpdate = async () => {
+    const codeToUpdate =
+      code[codeType === "user_code" ? "userCode" : "logicCode"][
+        selectedLanguage.toLowerCase() as keyof CodeLanguages
+      ];
+
+    try {
+      const result = await updateStarterCode(
+        problemId,
+        selectedLanguage,
+        codeType,
+        codeToUpdate || ""
+      );
+
+      if (result?.data?.success) {
+        toast.success("Code updated successfully!", { position: "top-right" });
+
+        setInitialCode((state: Code) => ({
+          ...state,
+          [codeType === "user_code" ? "userCode" : "logicCode"]: {
+            ...state[codeType === "user_code" ? "userCode" : "logicCode"],
+            [selectedLanguage.toLowerCase() as keyof CodeLanguages]:
+              codeToUpdate,
+          },
+        }));
+      } else {
+        toast.error("Failed to update the code.", { position: "top-right" });
+      }
+    } catch (error) {
+      console.log("Error updating code:", error);
+      toast.error("An error occurred while updating the code.", {
+        position: "top-right",
+      });
+    }
+
+    setIsUpdateDialogOpen(false);
   };
 
   useEffect(() => {
     const getData = async () => {
       const result = await getStarterCode(problemId);
       if (result?.data) {
+        console.log(result.data);
         const data: ProblemLanguagesResponse = result.data;
         if (data.success) {
           setStarterCodes(data.data);
 
           if (data.data.length > 0) {
-            setSelectedLanguage(data.data[0].name);
+            setSelectedLanguage(data.data[0].name as keyof CodeLanguages);
 
-            const initialCodeState = data.data.reduce((acc, item) => {
-              acc[item.name.toLowerCase() as keyof Code] = item.user_code || "";
+            const initialUserCodeState = data.data.reduce((acc, item) => {
+              acc[item.name.toLowerCase() as keyof CodeLanguages] =
+                item.user_code || "";
               return acc;
-            }, {} as Code);
+            }, {} as CodeLanguages);
 
-            setCode(initialCodeState);
+            const initialLogicCodeState = data.data.reduce((acc, item) => {
+              acc[item.name.toLowerCase() as keyof CodeLanguages] =
+                item.logic_code || "";
+              return acc;
+            }, {} as CodeLanguages);
+
+            setCode({
+              userCode: initialUserCodeState,
+              logicCode: initialLogicCodeState,
+            });
+            setInitialCode({
+              userCode: initialUserCodeState,
+              logicCode: initialLogicCodeState,
+            });
           }
         }
       }
@@ -119,7 +228,9 @@ export default function CodeEditor({
           <div className="flex gap-3 items-center">
             <Select
               value={selectedLanguage}
-              onValueChange={(value) => setSelectedLanguage(value)}
+              onValueChange={(value) =>
+                setSelectedLanguage(value as keyof CodeLanguages)
+              }
               defaultValue={starterCodes?.[0]?.name}
             >
               <SelectTrigger className="w-[180px]">
@@ -128,12 +239,14 @@ export default function CodeEditor({
               <SelectContent>
                 {starterCodes?.map((starterCode: SupportedLanguage, index) => (
                   <SelectItem
-                    key={starterCode.language_id}
+                    key={`${starterCode.language_id}`}
                     value={starterCode.name}
                     defaultChecked={index == 0}
                     onClick={() => {
                       if (index === 0 && !selectedLanguage) {
-                        setSelectedLanguage(starterCode.name);
+                        setSelectedLanguage(
+                          starterCode.name as keyof CodeLanguages
+                        );
                       }
                     }}
                   >
@@ -176,11 +289,11 @@ export default function CodeEditor({
               </ToggleGroup>
               <TooltipProvider>
                 <Tooltip>
-                  <TooltipTrigger>
+                  <TooltipTrigger asChild>
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={handleResetCode}
+                      onClick={() => setIsResetDialogOpen(true)}
                       className="flex items-center justify-center"
                     >
                       <ListRestart className="h-4 w-4" />
@@ -202,12 +315,16 @@ export default function CodeEditor({
               onClick={handleExecute}
               className="flex items-center gap-1"
             >
-              <Play className="h-4 w-4" />
-              Run
+              {isExecuting ? (
+                <Spinner className="mr-1" />
+              ) : (
+                <Play className="h-4 w-4 mr-1" />
+              )}
+              <span>Run</span>
             </Button>
             <Button
               size="sm"
-              onClick={onSubmit}
+              onClick={() => setIsUpdateDialogOpen(true)}
               className="flex items-center gap-1"
             >
               <Send className="h-4 w-4" />
@@ -220,11 +337,18 @@ export default function CodeEditor({
             className="rounded-lg"
             height="100%"
             language={selectedLanguage.toLowerCase()}
-            value={code[selectedLanguage.toLowerCase() as keyof Code]}
+            value={
+              (code as Code)[
+                codeType === "user_code" ? "userCode" : "logicCode"
+              ][selectedLanguage.toLowerCase() as keyof CodeLanguages] || ""
+            }
             onChange={(value) =>
-              setCode((state) => ({
+              setCode((state: Code) => ({
                 ...state,
-                [selectedLanguage.toLowerCase() as keyof Code]: value,
+                [codeType === "user_code" ? "userCode" : "logicCode"]: {
+                  ...state[codeType === "user_code" ? "userCode" : "logicCode"],
+                  [selectedLanguage.toLowerCase() as keyof Code]: value,
+                },
               }))
             }
             beforeMount={(monaco) => {
@@ -239,6 +363,7 @@ export default function CodeEditor({
               monaco.editor.setTheme("customTheme");
             }}
             options={{
+              fontSize: 13,
               minimap: { enabled: false },
               padding: { top: 16, bottom: 10 },
               fontFamily: "Cascadia Code",
@@ -252,6 +377,64 @@ export default function CodeEditor({
           />
         </div>
       </CardContent>
+
+      {/* Reset Confirmation Dialog */}
+      <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Code</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to reset the code for{" "}
+            <strong>{selectedLanguage}</strong> in{" "}
+            <strong>
+              {codeType === "user_code" ? "User Code" : "Logic Code"}
+            </strong>
+            ?
+          </p>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsResetDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmReset}>
+              Yes, Reset
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+        <DialogOverlay className="fixed inset-0 backdrop-blur-sm z-40" />
+      </Dialog>
+
+      {/* Update Confirmation Dialog */}
+      <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Code</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to update the code for{" "}
+            <strong>{selectedLanguage}</strong> in{" "}
+            <strong>
+              {codeType === "user_code" ? "User Code" : "Logic Code"}
+            </strong>
+            ?
+          </p>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsUpdateDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="default" onClick={handleConfirmUpdate}>
+              Yes, Update
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+        <DialogOverlay className="fixed inset-0 backdrop-blur-sm z-40" />
+      </Dialog>
     </Card>
   );
 }

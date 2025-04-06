@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   getProblem,
   getPublishStatus,
-  setPublishStatus
+  setPublishStatus,
 } from "../../controllers/problem.controller.js";
 
 const router = Router();

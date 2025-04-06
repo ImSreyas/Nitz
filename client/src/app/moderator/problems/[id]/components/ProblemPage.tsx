@@ -12,6 +12,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { getProblem } from "@/lib/api/moderator";
+import { Spinner } from "@/components/ui/spinner";
 
 type ProblemResponse = {
   success: boolean;
@@ -56,6 +57,7 @@ export default function ProblemPage({ problemId }: { problemId: string }) {
     results: [],
     standardError: undefined,
   });
+  const executingState = useState(false);
 
   const [activeTestTab, setActiveTestTab] = useState<
     "test-cases" | "test-result" | null
@@ -131,36 +133,48 @@ export default function ProblemPage({ problemId }: { problemId: string }) {
               problemId={problemId}
               onSubmit={handleSubmit}
               setTestResult={setTestResult}
+              executingState={executingState}
             />
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={50} minSize={20}>
-            <div className="h-full p-5 bg-card rounded-sm overflow-y-scroll">
-              <Tabs
-                defaultValue="test-case"
-                value={activeTestTab ?? undefined}
-                onValueChange={(value) =>
-                  setActiveTestTab(value as "test-cases" | "test-result" | null)
-                }
-                className="h-full"
-              >
-                <TabsList className="border border-foreground/10">
-                  <TabsTrigger value="test-case">Test Case</TabsTrigger>
-                  <TabsTrigger value="test-result">Test Result</TabsTrigger>
-                </TabsList>
-                <TabsContent value="test-case" className="h-full overflow-auto">
-                  <TestCaseInput testCases={testCase} />
-                </TabsContent>
-                <TabsContent value="test-result">
-                  <ExecutionOutput
-                    testResult={testResult}
-                    output={output}
-                    activeTab={activeResultTab ?? ""}
-                    setActiveTab={setActiveResultTab}
-                  />
-                </TabsContent>
-              </Tabs>
-            </div>
+            {executingState[0] ? (
+              <div className="h-full w-full p-5 bg-card rounded-sm flex justify-center items-center">
+                <Spinner size="medium" />
+              </div>
+            ) : (
+              <div className="h-full p-5 bg-card rounded-sm overflow-y-scroll">
+                <Tabs
+                  defaultValue="test-case"
+                  value={activeTestTab ?? undefined}
+                  onValueChange={(value) =>
+                    setActiveTestTab(
+                      value as "test-cases" | "test-result" | null
+                    )
+                  }
+                  className="h-full"
+                >
+                  <TabsList className="border border-foreground/10">
+                    <TabsTrigger value="test-case">Test Case</TabsTrigger>
+                    <TabsTrigger value="test-result">Test Result</TabsTrigger>
+                  </TabsList>
+                  <TabsContent
+                    value="test-case"
+                    className="h-full overflow-auto"
+                  >
+                    <TestCaseInput testCases={testCase} />
+                  </TabsContent>
+                  <TabsContent value="test-result">
+                    <ExecutionOutput
+                      testResult={testResult}
+                      output={output}
+                      activeTab={activeResultTab ?? ""}
+                      setActiveTab={setActiveResultTab}
+                    />
+                  </TabsContent>
+                </Tabs>
+              </div>
+            )}
           </ResizablePanel>
         </ResizablePanelGroup>
       </ResizablePanel>

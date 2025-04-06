@@ -53,7 +53,13 @@ export default function LoginForm() {
       .eq("email", email)
       .single();
 
-    if (userEmailError && moderatorEmailError) {
+    const { error: adminEmailError } = await supabase
+      .from("tbl_admins")
+      .select("email")
+      .eq("email", email)
+      .single();
+
+    if (userEmailError && moderatorEmailError && adminEmailError) {
       setError("email", {
         type: "manual",
         message: "Invalid email.",
@@ -82,12 +88,15 @@ export default function LoginForm() {
       .select("role")
       .eq("id", user.user?.id)
       .single();
+    console.log(userData);
 
     if (userData) {
       if (userData.role === "moderator") {
         router.push("/moderator");
       } else if (userData.role === "user") {
         router.push("/problems");
+      } else if (userData.role === "admin") {
+        router.push("/admin");
       }
     }
   };

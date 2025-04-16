@@ -1,9 +1,5 @@
-import express from "express";
 import { runCode } from "./language.controller.js";
 import pool from "../config/db.js";
-
-const app = express();
-app.use(express.json());
 
 export async function executeCode(req, res) {
   const { problemId, language, userCode, logicCode } = req.body;

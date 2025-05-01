@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 // import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Nav from "./nav/Nav";
 import { Toaster } from "@/components/ui/sonner";
 
 // const geistSans = Geist({
@@ -16,7 +15,7 @@ import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Bitz",
-  description: "Real-time Competitive Coding Platform",
+  description: "Competitive Coding Platform",
 };
 
 export default function RootLayout({
@@ -30,7 +29,6 @@ export default function RootLayout({
         // className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         className={`antialiased`}
       >
-        <Nav />
         {children}
         <Toaster />
       </body>

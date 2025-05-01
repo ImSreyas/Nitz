@@ -39,3 +39,12 @@ export async function getStarterCode(id: string) {
     console.log("Error fetching starter code:", error);
   }
 }
+
+export async function getProblemsList() {
+  try {
+    const response = await axios.get(`${baseUrl}/api/problem/list`);
+    return response;
+  } catch (error) {
+    console.log("Error fetching problems list:", error);
+  }
+}

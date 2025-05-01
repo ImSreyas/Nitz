@@ -7,7 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Bell, ChevronDown, Lock, Search, Settings, User } from "lucide-react";
+import { Bell, ChevronDown, Search, Settings, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePathname } from "next/navigation";
+import LogoutComponent from "@/app/components/common/LogoutComponent";
 
 export default function Header({
   nonVisiblePaths,
@@ -48,6 +49,7 @@ export default function Header({
               Beta
             </Badge>
           </div>
+
           <div className="flex items-center gap-4">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -93,10 +95,7 @@ export default function Header({
                   <span>Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Lock className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
+                <LogoutComponent />
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

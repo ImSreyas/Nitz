@@ -6,7 +6,7 @@ export default async function page({ params }: { params: { id: string } }) {
 
   return (
     <div className="min-h-screen bg-background">
-      <Problem id={id} context="moderator" />
+      <Problem id={id} context="user" />
     </div>
   );
 }

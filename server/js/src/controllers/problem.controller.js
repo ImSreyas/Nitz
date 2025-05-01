@@ -22,6 +22,34 @@ export async function getProblems(req, res) {
   }
 }
 
+export async function getProblemsList(req, res) {
+  try {
+    const query = `
+      SELECT 
+        p.*,
+        m.name AS moderator_name,
+        m.username AS moderator_username
+      FROM public.tbl_problems p
+      LEFT JOIN public.tbl_moderators m ON p.moderator_id = m.id
+      ORDER BY p.created_at DESC;
+    `;
+
+    const { rows } = await pool.query(query);
+
+    return res.status(200).json({
+      success: true,
+      data: rows,
+    });
+  } catch (error) {
+    console.error("Error fetching problem list:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+}
+
 export async function getProblem(req, res) {
   const id = req.query.id;
   try {
@@ -89,7 +117,6 @@ export async function getProblem(req, res) {
     res.status(500).json({ message: "internal server error" });
   }
 }
-
 
 export async function addProblem(req, res) {
   console.log(req.body);

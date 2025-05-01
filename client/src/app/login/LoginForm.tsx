@@ -12,6 +12,8 @@ import GoogleIconSVG from "@/icons/GoogleIconSVG";
 import { Github } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { googleAuthLogin } from "../auth/googleAuth";
+import { useState } from "react";
+import { Spinner } from "@/components/ui/spinner";
 
 function errorComponent(message: string) {
   return <p className="text-red-500 text-sm">{message}</p>;
@@ -27,6 +29,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function LoginForm() {
   const router = useRouter();
   const supabase = createClient();
+  const [isLoading, setIsLoading] = useState(false); // Loading state
 
   const {
     register,
@@ -38,66 +41,74 @@ export default function LoginForm() {
   });
 
   const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
+    setIsLoading(true); // Set loading state to true
     const { email, password } = data;
 
-    // Check if the email exists in tbl_users or tbl_moderators
-    const { error: userEmailError } = await supabase
-      .from("tbl_users")
-      .select("email")
-      .eq("email", email)
-      .single();
+    try {
+      // Check if the email exists in tbl_users or tbl_moderators
+      const { error: userEmailError } = await supabase
+        .from("tbl_users")
+        .select("email")
+        .eq("email", email)
+        .single();
 
-    const { error: moderatorEmailError } = await supabase
-      .from("tbl_moderators")
-      .select("email")
-      .eq("email", email)
-      .single();
+      const { error: moderatorEmailError } = await supabase
+        .from("tbl_moderators")
+        .select("email")
+        .eq("email", email)
+        .single();
 
-    const { error: adminEmailError } = await supabase
-      .from("tbl_admins")
-      .select("email")
-      .eq("email", email)
-      .single();
+      const { error: adminEmailError } = await supabase
+        .from("tbl_admins")
+        .select("email")
+        .eq("email", email)
+        .single();
 
-    if (userEmailError && moderatorEmailError && adminEmailError) {
-      setError("email", {
-        type: "manual",
-        message: "Invalid email.",
-      });
-      return;
-    }
-
-    // Attempt to sign in
-    const { data: user, error: loginError } =
-      await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-    if (loginError) {
-      setError("password", {
-        type: "manual",
-        message: "Invalid password.",
-      });
-      return;
-    }
-
-    // Redirect based on user role
-    const { data: userData } = await supabase
-      .from("tbl_user_roles")
-      .select("role")
-      .eq("id", user.user?.id)
-      .single();
-    console.log(userData);
-
-    if (userData) {
-      if (userData.role === "moderator") {
-        router.push("/moderator");
-      } else if (userData.role === "user") {
-        router.push("/problems");
-      } else if (userData.role === "admin") {
-        router.push("/admin");
+      if (userEmailError && moderatorEmailError && adminEmailError) {
+        setError("email", {
+          type: "manual",
+          message: "Invalid email.",
+        });
+        setIsLoading(false); // Reset loading state
+        return;
       }
+
+      // Attempt to sign in
+      const { data: user, error: loginError } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+      if (loginError) {
+        setError("password", {
+          type: "manual",
+          message: "Invalid password.",
+        });
+        setIsLoading(false); // Reset loading state
+        return;
+      }
+
+      // Redirect based on user role
+      const { data: userData } = await supabase
+        .from("tbl_user_roles")
+        .select("role")
+        .eq("id", user.user?.id)
+        .single();
+
+      if (userData) {
+        if (userData.role === "moderator") {
+          router.push("/moderator");
+        } else if (userData.role === "user") {
+          router.push("/problems");
+        } else if (userData.role === "admin") {
+          router.push("/admin");
+        }
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+    } finally {
+      setIsLoading(false); // Reset loading state
     }
   };
 
@@ -115,7 +126,9 @@ export default function LoginForm() {
           <Button
             variant="outline"
             className="w-full"
-            onClick={() => {googleAuthLogin()}}
+            onClick={() => {
+              googleAuthLogin();
+            }}
           >
             <GoogleIconSVG />
             Continue with Google
@@ -170,8 +183,8 @@ export default function LoginForm() {
                 {errors.password &&
                   errorComponent(errors.password.message || "")}
               </div>
-              <Button type="submit" className="w-full">
-                Login
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? <Spinner size="small" className="text-black"></Spinner> : "Login"}
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">

@@ -9,6 +9,7 @@ interface TestCaseInputProps {
 
 export default function TestCaseInput({ testCases }: TestCaseInputProps) {
   if (!testCases) return <div>Loading...</div>;
+  testCases = testCases.slice(0, 3);
 
   return (
     <div className="h-full">

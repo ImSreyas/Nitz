@@ -9,7 +9,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Cpu, FileText, RefreshCcw, Trash2 } from "lucide-react";
+import {
+  CircleCheck,
+  CircleDashed,
+  Cpu,
+  FileText,
+  RefreshCcw,
+  Trash2,
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -19,7 +26,9 @@ import {
 } from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import {
+  changeApprovalStatus,
   deleteProblem,
+  getApprovalStatus,
   getPublishStatus,
   setPublishStatus,
 } from "@/lib/api/moderator";
@@ -27,6 +36,10 @@ import { toast } from "sonner";
 import { redirect } from "next/navigation";
 import UpdateProblemDialog from "./UpdateProblemDialog";
 import { useRoleStore } from "@/lib/store/useRoleStore";
+import { Label } from "@/components/ui/label";
+import { TestCase } from "./ProblemPage";
+import { fetchProblemAttendStatus } from "@/lib/api/common";
+import { useExecutionStore } from "@/lib/store/useExecutionStore";
 
 type PublishStatus = "unpublished" | "published";
 type ProblemStatementType = {
@@ -41,8 +54,17 @@ type ProblemStatementType = {
   outputFormat: string;
   memoryLimit: string;
   timeLimit: string;
-  testCases: { input: string; output: string; explanation?: string }[];
+  testCases: TestCase[] | null;
+  fetchProblemData: () => void;
 };
+type ApprovalStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "archived"
+  | "deprecated";
+
+type AttendStatus = "pending" | "accepted" | "rejected" | null;
 
 function TitleCard({
   title,
@@ -60,6 +82,30 @@ function TitleCard({
   );
 }
 
+function AttendStatusBadge({ status }: { status: AttendStatus }) {
+  const textColor =
+    status === "pending"
+      ? "text-yellow-500"
+      : status === "accepted"
+      ? "text-green-500"
+      : status === "rejected"
+      ? "text-red-500"
+      : "text-muted-foreground";
+  const text =
+    status === "pending"
+      ? "Tried"
+      : status === "accepted"
+      ? "Completed"
+      : status === "rejected"
+      ? "Rejected"
+      : "Not Attended";
+  return (
+    <div className={`border px-2 py-1 rounded-md text-xs ${textColor}`}>
+      {text}
+    </div>
+  );
+}
+
 export default function ProblemStatement({
   problemId,
   problem,
@@ -73,12 +119,18 @@ export default function ProblemStatement({
   memoryLimit,
   timeLimit,
   testCases,
+  fetchProblemData,
 }: ProblemStatementType) {
   const [status, setStatus] = useState<PublishStatus>("unpublished");
+  const [approvalStatus, setApprovalStatus] = useState<ApprovalStatus | null>(
+    null
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false); // State for update dialog
+  const [attendStatus, setAttendStatus] = useState<AttendStatus>(null);
 
   const { context } = useRoleStore();
+  const { isExecutingComplete, setIsExecutingComplete } = useExecutionStore();
 
   useEffect(() => {
     const fetchPublishStatus = async () => {
@@ -98,8 +150,37 @@ export default function ProblemStatement({
       }
     };
 
+    const fetchApprovalStatus = async () => {
+      const result = await getApprovalStatus(problemId);
+      if (result) {
+        if (result.data) {
+          const data = result.data;
+          if (data?.success) {
+            const fetchedStatus = data?.data?.status;
+            setApprovalStatus(fetchedStatus);
+          } else {
+            toast.error("Something went wrong", { position: "bottom-center" });
+          }
+        }
+      }
+    };
+
     fetchPublishStatus();
+    fetchApprovalStatus();
   }, [problemId]);
+
+  const getProblemAttendStatus = async () => {
+    const result = await fetchProblemAttendStatus(problemId);
+    if (result?.data?.success && result.data?.data?.status) {
+      setAttendStatus(result.data.data.status);
+    }
+    setIsExecutingComplete(false);
+  };
+
+  useEffect(() => {
+    if (context === "user") getProblemAttendStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isExecutingComplete, context]);
 
   const handleStatusChange = async (value: PublishStatus) => {
     setStatus(value);
@@ -113,6 +194,23 @@ export default function ProblemStatement({
           });
         } else {
           toast.error("Something went wrong", { position: "top-right" });
+        }
+      }
+    }
+  };
+
+  const handleApprovalStatusChange = async (value: ApprovalStatus) => {
+    setApprovalStatus(value);
+    const result = await changeApprovalStatus(problemId, value);
+    if (result) {
+      if (result?.data) {
+        const data = result.data;
+        if (data?.success) {
+          toast.success("Approval Status updated successfully", {
+            position: "bottom-center",
+          });
+        } else {
+          toast.error("Something went wrong", { position: "bottom-center" });
         }
       }
     }
@@ -142,60 +240,107 @@ export default function ProblemStatement({
       <Card className="flex-1 border-0 rounded-none overflow-hidden pb-6">
         <CardHeader className="flex flex-row items-start justify-between space-y-0 px-4 py-3 border-b">
           <div>
-            <CardTitle className="text-xl font-bold">
-              {problemNum}. {problemTitle}
-            </CardTitle>
-            <div className="flex items-center gap-2 mt-2">
-              <div
-                className={`${
-                  difficulty === "beginner"
-                    ? "text-difficulty-beginner"
-                    : difficulty === "easy"
-                    ? "text-difficulty-easy"
-                    : difficulty === "medium"
-                    ? "text-difficulty-medium"
-                    : difficulty === "hard"
-                    ? "text-difficulty-hard"
-                    : difficulty === "complex"
-                    ? "text-difficulty-complex"
-                    : "--text-white"
-                } text-xs border px-3 py-1 bg-accent rounded-sm`}
-              >
-                {difficulty}
-              </div>
-              {context !== "user" && (
-                <span className="text-sm text-muted-foreground">
-                  Competition Mode:{" "}
-                  <span className="text-foreground">{competitionMode}</span>
+            <CardTitle className="text-xl font-bold flex items-center gap-2">
+              {attendStatus && (
+                <span>
+                  {attendStatus === "pending" && (
+                    <CircleDashed size={18} className="text-yellow-300" />
+                  )}
+                  {attendStatus === "accepted" && (
+                    <CircleCheck className="text-green-500" size={18} />
+                  )}
                 </span>
               )}
+              {problemNum}. {problemTitle}
+            </CardTitle>
+            <div className="flex flex-col items-start gap-2 mt-2">
+              {context !== "user" && (
+                <div className="text-sm text-muted-foreground">
+                  Competition Mode:{" "}
+                  <span className="text-foreground">{competitionMode}</span>
+                </div>
+              )}
+              <div className="flex gap-2 items-center">
+                <div
+                  className={`${
+                    difficulty === "beginner"
+                      ? "text-difficulty-beginner"
+                      : difficulty === "easy"
+                      ? "text-difficulty-easy"
+                      : difficulty === "medium"
+                      ? "text-difficulty-medium"
+                      : difficulty === "hard"
+                      ? "text-difficulty-hard"
+                      : difficulty === "complex"
+                      ? "text-difficulty-complex"
+                      : "--text-white"
+                  } text-xs border px-3 py-1 bg-accent rounded-sm`}
+                >
+                  {difficulty}
+                </div>
+                {attendStatus === "pending" ? (
+                  <AttendStatusBadge status={attendStatus} />
+                ) : attendStatus === "accepted" ? (
+                  <AttendStatusBadge status={attendStatus} />
+                ) : attendStatus === "rejected" ? (
+                  <AttendStatusBadge status={attendStatus} />
+                ) : (
+                  <AttendStatusBadge status={attendStatus} />
+                )}
+              </div>
             </div>
           </div>
           {context !== "user" && (
-            <div className="flex items-center gap-2">
-              <Select value={status} onValueChange={handleStatusChange}>
-                <SelectTrigger className="w-[150px] h-8 text-xs">
-                  <SelectValue placeholder="Select Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unpublished">Unpublished</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setIsUpdateDialogOpen(true)} // Open update dialog
-              >
-                <RefreshCcw className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setIsDialogOpen(true)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Select value={status} onValueChange={handleStatusChange}>
+                  <SelectTrigger className="w-[150px] h-8 text-xs">
+                    <SelectValue placeholder="Select Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unpublished">Unpublished</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsUpdateDialogOpen(true)} // Open update dialog
+                  className="w-fit"
+                >
+                  {" "}
+                  Update
+                  <RefreshCcw className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setIsDialogOpen(true)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="w-full">
+                {context === "admin" && (
+                  <div className="space-y-1 border px-2 pb-2 pt-1 rounded-lg">
+                    <Label className="px-2 text-xs">Approval Status</Label>
+                    <Select
+                      value={approvalStatus || "pending"}
+                      onValueChange={handleApprovalStatusChange}
+                    >
+                      <SelectTrigger className="w-full h-8 text-xs">
+                        <SelectValue placeholder="Select Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                        <SelectItem value="archived">Archived</SelectItem>
+                        <SelectItem value="deprecated">Deprecated</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </CardHeader>
@@ -210,7 +355,7 @@ export default function ProblemStatement({
             {/* Test Cases */}
             <div className="space-y-4">
               <TitleCard title="Examples" />
-              {testCases.map((testCase, index) => (
+              {testCases?.map((testCase, index) => (
                 <Card
                   key={index}
                   className="p-4 border rounded-md bg-card text-xs"
@@ -311,6 +456,7 @@ export default function ProblemStatement({
         isOpen={isUpdateDialogOpen}
         onClose={() => setIsUpdateDialogOpen(false)}
         problemId={problemId}
+        onUpdate={fetchProblemData}
       />
     </div>
   );

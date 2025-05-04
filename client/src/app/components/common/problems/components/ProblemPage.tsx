@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/resizable";
 import { getProblem } from "@/lib/api/moderator";
 import { Spinner } from "@/components/ui/spinner";
+import { useRoleStore } from "@/lib/store/useRoleStore";
 
 type ProblemResponse = {
   success: boolean;
@@ -46,6 +47,7 @@ export type TestCase = {
 };
 
 export default function ProblemPage({ problemId }: { problemId: string }) {
+  const { context } = useRoleStore();
   const [problem, setProblem] = useState<Problem | null>(null);
   const [testCase, setTestCase] = useState<TestCase[] | null>(null);
   const [output, setOutput] = useState({
@@ -75,20 +77,32 @@ export default function ProblemPage({ problemId }: { problemId: string }) {
     }
   }, [testResult]);
 
-  useEffect(() => {
-    const fetchProblemData = async () => {
-      const result = await getProblem(problemId);
-      if (result?.data) {
-        const data: ProblemResponse = result.data;
-        if (data?.success && data.data.length > 0) {
-          const fetchedProblem = data.data[0];
-          setProblem(fetchedProblem);
+  console.log(problem)
+
+  const fetchProblemData = async () => {
+    const result = await getProblem(problemId);
+    if (result?.data) {
+      const data: ProblemResponse = result.data;
+      if (data?.success && data.data.length > 0) {
+        const fetchedProblem = data.data[0];
+        setProblem(fetchedProblem);
+        console.log(fetchedProblem)
+        if (context === "moderator") {
           setTestCase(fetchedProblem.test_cases || null);
+        } else {
+          if (fetchedProblem.test_cases.length <= 3) {
+            setTestCase(fetchedProblem.test_cases);
+          } else {
+            setTestCase(fetchedProblem.test_cases.slice(0, 3));
+          }
         }
       }
-    };
+    }
+  };
+  useEffect(() => {
     fetchProblemData();
-  }, [problemId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [problemId, context]);
 
   const handleSubmit = () => {
     setOutput({
@@ -122,7 +136,8 @@ export default function ProblemPage({ problemId }: { problemId: string }) {
           outputFormat={problem.output_format}
           memoryLimit={problem.memory_limit}
           timeLimit={problem.time_limit}
-          testCases={problem.test_cases}
+          testCases={testCase}
+          fetchProblemData={fetchProblemData}
         />
       </ResizablePanel>
       <ResizableHandle withHandle />

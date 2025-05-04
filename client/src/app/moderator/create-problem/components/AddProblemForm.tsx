@@ -82,44 +82,264 @@ export default function AddProblemForm() {
       starterCode: [
         {
           language: "python",
-          userCode:
-            "# User writes solution here\ndef addTwoNumbers(a, b):\n    # Your code here",
-          logicCode:
-            "# Logic to transform inputs and compare outputs\ndef transform_input(input_args):\n    return list(map(int, input_args))\n\ndef transform_output(output):\n    return str(output)",
-        },
-        {
-          language: "javascript",
-          userCode:
-            "// User writes solution here\nfunction addTwoNumbers(a, b) {\n  // Your code here\n}",
-          logicCode:
-            "// Logic to transform inputs and compare outputs\nfunction transformInput(inputArgs) {\n  return inputArgs.map(Number);\n}\n\nfunction transformOutput(output) {\n  return output.toString();\n}",
+          userCode: `# User writes solution here
+def addTwoNumbers(a, b):
+    # Your code here
+    return a + b`,
+          logicCode: `# Logic to transform inputs and compare outputs
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) != 4:
+        print("0:Invalid number of arguments")
+        sys.exit(1)
+
+    a = int(sys.argv[1])
+    b = int(sys.argv[2])
+    expected = int(sys.argv[3])
+
+    result = addTwoNumbers(a, b)
+
+    if result == expected:
+        print(f"1:{result}")
+    else:
+        print(f"0:{result}")`,
         },
         {
           language: "java",
-          userCode:
-            "// User writes solution here\npublic class Solution {\n  public int addTwoNumbers(int a, int b) {\n    // Your code here\n  }\n}",
-          logicCode:
-            "// Logic to transform inputs and compare outputs\npublic class TestRunner {\n  public static int[] transformInput(String[] inputArgs) {\n    int[] result = new int[inputArgs.length];\n    for (int i = 0; i < inputArgs.length; i++) {\n      result[i] = Integer.parseInt(inputArgs[i]);\n    }\n    return result;\n  }\n  \n  public static String transformOutput(int output) {\n    return Integer.toString(output);\n  }\n}",
+          userCode: `// User writes solution here
+class Solution {
+    public int addTwoNumbers(int a, int b) {
+        // Your code here
+        return a + b;
+    }
+}`,
+          logicCode: `// Logic to transform inputs and compare outputs
+public class Main {
+    public static void main(String[] args) {
+        if (args.length != 3) {
+            System.out.println("0:Invalid number of arguments");
+            return;
+        }
+
+        try {
+            int a = Integer.parseInt(args[0]);
+            int b = Integer.parseInt(args[1]);
+            int expected = Integer.parseInt(args[2]);
+
+            Solution sol = new Solution();
+            int output = sol.addTwoNumbers(a, b);
+
+            if (output == expected) {
+                System.out.println("1:" + output);
+            } else {
+                System.out.println("0:" + output);
+            }
+        } catch (Exception e) {
+            System.out.println("0:Error - " + e.getMessage());
+        }
+    }
+}`,
         },
         {
           language: "cpp",
-          userCode:
-            "// User writes solution here\nint addTwoNumbers(int a, int b) {\n  // Your code here\n}",
-          logicCode:
-            "// Logic to transform inputs and compare outputs\n#include <vector>\n#include <string>\n#include <sstream>\n\nstd::vector<int> transformInput(std::vector<std::string> inputArgs) {\n  std::vector<int> result;\n  for (const auto& arg : inputArgs) {\n    result.push_back(std::stoi(arg));\n  }\n  return result;\n}\n\nstd::string transformOutput(int output) {\n  return std::to_string(output);\n}",
+          userCode: `#include <iostream>
+#include <string>
+#include <cstdlib>
+
+int addTwoNumbers(int a, int b) {
+    // Your code here
+    return a + b;
+}`,
+          logicCode: `// Logic to transform inputs and compare outputs
+int main(int argc, char* argv[]) {
+    if (argc != 4) {
+        std::cout << "0:Invalid number of arguments" << std::endl;
+        return 1;
+    }
+
+    int a = std::stoi(argv[1]);
+    int b = std::stoi(argv[2]);
+    int expected = std::stoi(argv[3]);
+
+    int result = addTwoNumbers(a, b);
+
+    if (result == expected) {
+        std::cout << "1:" << result << std::endl;
+    } else {
+        std::cout << "0:" << result << std::endl;
+    }
+
+    return 0;
+}`,
         },
         {
           language: "rust",
-          userCode:
-            "// User writes solution here\npub fn add_two_numbers(a: i32, b: i32) -> i32 {\n    // Your code here\n}",
-          logicCode:
-            "// Logic to transform inputs and compare outputs\npub fn transform_input(input_args: Vec<&str>) -> Vec<i32> {\n    input_args.iter()\n        .map(|s| s.parse().unwrap())\n        .collect()\n}\n\npub fn transform_output(output: i32) -> String {\n    output.to_string()\n}",
+          userCode: `// User writes solution here
+pub fn add_two_numbers(a: i32, b: i32) -> i32 {
+    // Your code here
+    a + b
+}`,
+          logicCode: `// Logic to transform inputs and compare outputs
+use std::env;
+
+fn main() {
+    let args: Vec<String> = env::args().collect();
+
+    if args.len() != 4 {
+        println!("0:Invalid number of arguments");
+        return;
+    }
+
+    let a: i32 = args[1].parse().unwrap();
+    let b: i32 = args[2].parse().unwrap();
+    let expected: i32 = args[3].parse().unwrap();
+
+    let result = add_two_numbers(a, b);
+
+    if result == expected {
+        println!("1:{}", result);
+    } else {
+        println!("0:{}", result);
+    }
+}`,
+        },
+        {
+          language: "go",
+          userCode: `// User writes solution here
+package main
+
+import (
+    "fmt"
+    "os"
+    "strconv"
+)
+
+func AddTwoNumbers(a int, b int) int {
+    // Your code here
+    return a + b
+}`,
+          logicCode: `// Logic to transform inputs and compare outputs
+
+func main() {
+    if len(os.Args) != 4 {
+        fmt.Println("0:Invalid number of arguments")
+        return
+    }
+
+    a, _ := strconv.Atoi(os.Args[1])
+    b, _ := strconv.Atoi(os.Args[2])
+    expected, _ := strconv.Atoi(os.Args[3])
+
+    result := AddTwoNumbers(a, b)
+
+    if result == expected {
+        fmt.Printf("1:%d\\n", result)
+    } else {
+        fmt.Printf("0:%d\\n", result)
+    }
+}`,
+        },
+        {
+          language: "c",
+          userCode: `// User writes solution here
+#include <stdio.h>
+#include <stdlib.h>
+
+int addTwoNumbers(int a, int b) {
+    // Your code here
+    return a + b;
+}`,
+          logicCode: `// Logic to transform inputs and compare outputs
+
+int main(int argc, char* argv[]) {
+    if (argc != 4) {
+        printf("0:Invalid number of arguments\\n");
+        return 1;
+    }
+
+    int a = atoi(argv[1]);
+    int b = atoi(argv[2]);
+    int expected = atoi(argv[3]);
+
+    int result = addTwoNumbers(a, b);
+
+    if (result == expected) {
+        printf("1:%d\\n", result);
+    } else {
+        printf("0:%d\\n", result);
+    }
+
+    return 0;
+}`,
+        },
+        {
+          language: "swift",
+          userCode: `// User writes solution here
+func addTwoNumbers(_ a: Int, _ b: Int) -> Int {
+    // Your code here
+    return a + b
+}`,
+          logicCode: `// Logic to transform inputs and compare outputs
+import Foundation
+
+if CommandLine.arguments.count != 4 {
+    print("0:Invalid number of arguments")
+    exit(1)
+}
+
+let a = Int(CommandLine.arguments[1])!
+let b = Int(CommandLine.arguments[2])!
+let expected = Int(CommandLine.arguments[3])!
+
+let result = addTwoNumbers(a, b)
+
+if result == expected {
+    print("1:\\(result)")
+} else {
+    print("0:\\(result)")
+}`,
+        },
+        {
+          language: "kotlin",
+          userCode: `// User writes solution here
+fun addTwoNumbers(a: Int, b: Int): Int {
+    // Your code here
+    return a + b
+}`,
+          logicCode: `// Logic to transform inputs and compare outputs
+fun main(args: Array<String>) {
+    if (args.size != 3) {
+        println("0:Invalid number of arguments")
+        return
+    }
+
+    val a = args[0].toInt()
+    val b = args[1].toInt()
+    val expected = args[2].toInt()
+
+    val result = addTwoNumbers(a, b)
+
+    if (result == expected) {
+        println("1:$result")
+    } else {
+        println("0:$result")
+    }
+}`,
         },
       ],
     },
   });
 
-  const languages = ["python", "javascript", "java", "cpp", "rust"];
+  const languages = [
+    "python",
+    "java",
+    "c",
+    "cpp",
+    "rust",
+    "go",
+    "swift",
+    "kotlin",
+  ];
   const [currentSelectedLanguage, setCurrentSelectedLanguage] = useState<
     (typeof languages)[number] | null
   >("python");
@@ -134,22 +354,24 @@ export default function AddProblemForm() {
     if (result) {
       const data = result.data;
       if (data?.success) {
-          toast.custom(
-            () => (
-              <div className="rounded-md pr-10 pl-6 overflow-hidden  py-3 shadow-lg bg-primary text-primary-foreground">
-                <button
-                  onClick={() => toast.dismiss()}
-                  className="absolute top-[50%] right-4 -translate-y-[50%] text-sm text-primary-foreground bg-transparent border-none cursor-pointer"
-                >
-                  ✕
-                </button>{" "}
-                <p className="whitespace-nowrap font-semibold">Problem added successfully</p>
-              </div>
-            ),
-            {
-              position: "bottom-right",
-            }
-          );
+        toast.custom(
+          () => (
+            <div className="rounded-md pr-10 pl-6 overflow-hidden  py-3 shadow-lg bg-primary text-primary-foreground">
+              <button
+                onClick={() => toast.dismiss()}
+                className="absolute top-[50%] right-4 -translate-y-[50%] text-sm text-primary-foreground bg-transparent border-none cursor-pointer"
+              >
+                ✕
+              </button>{" "}
+              <p className="whitespace-nowrap font-semibold">
+                Problem added successfully
+              </p>
+            </div>
+          ),
+          {
+            position: "bottom-right",
+          }
+        );
       } else {
         if (data.errorCode === "23505") {
           toast.custom(
@@ -161,7 +383,9 @@ export default function AddProblemForm() {
                 >
                   ✕
                 </button>{" "}
-                <p className="whitespace-nowrap font-semibold">{data.errorMessage}</p>
+                <p className="whitespace-nowrap font-semibold">
+                  {data.errorMessage}
+                </p>
               </div>
             ),
             {
@@ -169,7 +393,6 @@ export default function AddProblemForm() {
             }
           );
         }
-
       }
     }
   };
@@ -348,7 +571,7 @@ export default function AddProblemForm() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="mt-4 grid grid-cols-1 3xl:grid-cols-2 gap-4">
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 3xl:grid-cols-2 gap-4">
                 <div className="rounded-lg">
                   <label className="text-sm mb-2 block">User Code</label>
                   <MonacoEditor
@@ -372,6 +595,7 @@ export default function AddProblemForm() {
                       minimap: { enabled: false },
                       padding: { top: 16, bottom: 10 },
                       fontFamily: "Cascadia Code",
+                      fontSize: 13,
                       scrollbar: {
                         verticalScrollbarSize: 10,
                         horizontalScrollbarSize: 10,
@@ -404,6 +628,7 @@ export default function AddProblemForm() {
                       minimap: { enabled: false },
                       padding: { top: 16, bottom: 10 },
                       fontFamily: "Cascadia Code",
+                      fontSize: 13,
                       scrollbar: {
                         verticalScrollbarSize: 10,
                         horizontalScrollbarSize: 10,

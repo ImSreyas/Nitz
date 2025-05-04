@@ -1,7 +1,8 @@
 import React from "react";
 import Problem from "@/app/components/common/problems/Problem";
 
-export default async function page({ params }: { params: { id: string } }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default async function page({ params }: { params: Promise<any> }) {
   const { id } = await params;
 
   return (

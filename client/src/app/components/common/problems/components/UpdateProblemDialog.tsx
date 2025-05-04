@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { getProblem, updateProblem } from "@/lib/api/moderator";
 
 export const problemSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters long"),
@@ -43,6 +44,7 @@ export const problemSchema = z.object({
         input: z.string().min(1, "Input is required"),
         output: z.string().min(1, "Output is required"),
         explanation: z.string().optional(),
+        test_case_id: z.string().optional(),
       })
     )
     .min(3, "At least three test cases are required"),
@@ -52,10 +54,12 @@ export default function UpdateProblemDialog({
   isOpen,
   onClose,
   problemId,
+  onUpdate,
 }: {
   isOpen: boolean;
   onClose: () => void;
   problemId: string;
+  onUpdate: () => void;
 }) {
   const {
     control,
@@ -78,11 +82,7 @@ export default function UpdateProblemDialog({
       memoryLimit: "",
       inputFormat: "",
       outputFormat: "",
-      testCases: [
-        { input: "", output: "", explanation: "" },
-        { input: "", output: "", explanation: "" },
-        { input: "", output: "", explanation: "" },
-      ],
+      testCases: [],
     },
   });
 
@@ -91,45 +91,75 @@ export default function UpdateProblemDialog({
     name: "testCases",
   });
 
-  useEffect(() => {
-    const fetchProblemData = async () => {
-      const dummyData = {
-        title: "Sample Problem",
-        difficulty: "medium",
-        problemType: "coding",
-        competitionMode: "general",
-        topics: "math, algorithms",
-        problemStatement: "Find the sum of two numbers.",
-        constraints: "1 <= a, b <= 1000",
-        timeLimit: "1",
-        memoryLimit: "128",
-        inputFormat: "Two integers a and b",
-        outputFormat: "Sum of a and b",
-        testCases: [
-          { input: "1 2", output: "3", explanation: "1 + 2 = 3" },
-          { input: "10 20", output: "30", explanation: "10 + 20 = 30" },
-          { input: "100 200", output: "300", explanation: "100 + 200 = 300" },
-        ],
-      };
-      Object.keys(dummyData).forEach((key) => {
-        setValue(key, dummyData[key]);
-      });
-    };
+  const [testCaseDeleteArray, setTestCaseDeleteArray] = useState<string[]>([]);
 
+  const fetchProblemData = async () => {
+    try {
+      const response = await getProblem(problemId);
+      if (response?.data?.success) {
+        const problemData = response?.data?.data[0];
+        if (!problemData) {
+          toast.error("Problem not found.");
+          return;
+        }
+
+        // Set the fetched problem data into the form
+        (Object.keys(problemData) as Array<keyof typeof problemData>).forEach(
+          (key) => {
+            if (key === "topics") {
+              return;
+            }
+            setValue(key as keyof typeof problemSchema._type, problemData[key]);
+          }
+        );
+        setValue("timeLimit", problemData.time_limit);
+        setValue("memoryLimit", problemData.memory_limit);
+        setValue("problemStatement", problemData.problem_statement);
+        setValue("inputFormat", problemData.input_format);
+        setValue("outputFormat", problemData.output_format);
+        setValue("competitionMode", problemData.competition_mode);
+        setValue("problemType", problemData.problem_type);
+        setValue("testCases", problemData.test_cases);
+        setValue(
+          "topics",
+          Array.isArray(problemData.topics) && problemData.topics.length > 0
+            ? problemData.topics.join(", ")
+            : ""
+        );
+        setTestCaseDeleteArray([]);
+      } else {
+        toast.error("Failed to fetch problem details.");
+      }
+    } catch (error) {
+      console.error("Error fetching problem details:", error);
+      toast.error("An error occurred while fetching problem details.");
+    }
+  };
+  useEffect(() => {
     if (isOpen) {
       fetchProblemData();
     }
-  }, [isOpen, setValue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, problemId, setValue]);
 
-  const handleUpdate = (data: any) => {
-    console.log("Updated Data:", data);
-    toast.success("Problem updated successfully!");
+  const handleUpdate = async (data: z.infer<typeof problemSchema>) => {
+    try {
+      const reponse = await updateProblem(problemId, data, testCaseDeleteArray);
+      if (reponse?.data?.success) {
+        toast.success("Problem updated successfully!");
+        onUpdate();
+      } else {
+        toast.error("Failed to update problem.");
+      }
+    } catch {
+      toast.error("Failed to update problem.");
+    }
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[80vh] overflow-y-scroll no-scrollbar px-12">
+      <DialogContent className="max-h-[80vh] overflow-y-scroll px-16 py-12 max-w-2xl">
         <DialogHeader>
           <DialogTitle>Edit Problem</DialogTitle>
         </DialogHeader>
@@ -150,7 +180,12 @@ export default function UpdateProblemDialog({
             <label className="block text-sm font-medium mb-1">Difficulty</label>
             <Select
               value={watch("difficulty")}
-              onValueChange={(value) => setValue("difficulty", value)}
+              onValueChange={(value) =>
+                setValue(
+                  "difficulty",
+                  value as "beginner" | "easy" | "medium" | "hard" | "complex"
+                )
+              }
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select Difficulty" />
@@ -163,6 +198,88 @@ export default function UpdateProblemDialog({
                 <SelectItem value="complex">Complex</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Competition Mode
+            </label>
+
+            <Select
+              value={watch("competitionMode")}
+              onValueChange={(value) =>
+                setValue("competitionMode", value as "general" | "competitive")
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select Competitive Mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="general">General</SelectItem>
+                <SelectItem value="competitive">Competitive</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Problem Type
+            </label>
+
+            <Select
+              value={watch("problemType")}
+              onValueChange={(value) =>
+                setValue("problemType", value as "coding" | "debugging")
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select Problem Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="coding">Coding</SelectItem>
+                <SelectItem value="debugging">Debugging</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Topics</label>
+            <Input
+              {...register("topics")}
+              placeholder="Comma-separated topics (e.g., math, algorithms)"
+              className="w-full"
+            />
+            {errors.topics && (
+              <p className="text-red-500 text-xs">{errors.topics.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Time Limit</label>
+            <Input
+              {...register("timeLimit")}
+              placeholder="Time limit in seconds"
+              className="w-full"
+            />
+            {errors.timeLimit && (
+              <p className="text-red-500 text-xs">{errors.timeLimit.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Memory Limit
+            </label>
+            <Input
+              {...register("memoryLimit")}
+              placeholder="Memory limit in MB"
+              className="w-full"
+            />
+            {errors.memoryLimit && (
+              <p className="text-red-500 text-xs">
+                {errors.memoryLimit.message}
+              </p>
+            )}
           </div>
 
           <div>
@@ -233,7 +350,7 @@ export default function UpdateProblemDialog({
             <h4 className="font-medium text-sm">Test Cases</h4>
             <div className="space-y-4">
               {fields.map((field, index) => (
-                <div key={field.id} className="space-y-2 p-2 border rounded-sm">
+                <div key={field.id} className="space-y-3 p-4 border rounded-sm">
                   <div>
                     <label className="block text-sm font-medium mb-1">
                       Input
@@ -261,13 +378,24 @@ export default function UpdateProblemDialog({
                       placeholder="Explanation (optional)"
                     />
                   </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => remove(index)}
-                  >
-                    Remove
-                  </Button>
+                  {fields.length > 3 && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        remove(index);
+                        if (field.test_case_id) {
+                          setTestCaseDeleteArray((prev) => [
+                            ...prev,
+                            ...(field.test_case_id ? [field.test_case_id] : []),
+                          ]);
+                        }
+                      }}
+                      className="!mt-4"
+                    >
+                      Remove
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
@@ -280,8 +408,16 @@ export default function UpdateProblemDialog({
             </Button>
           </div>
 
-          <DialogFooter>
-            <Button type="submit" className="w-full">
+          <DialogFooter className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-40 max-w-[30%]"
+              onClick={() => fetchProblemData()}
+            >
+              Reset
+            </Button>
+            <Button type="submit" className="w-full graw">
               Update
             </Button>
           </DialogFooter>

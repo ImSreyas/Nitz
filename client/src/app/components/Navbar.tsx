@@ -6,7 +6,6 @@ import {
 } from "../components/ui/navigation-menu";
 import {
   Sheet,
-  SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -18,6 +17,7 @@ import { Menu } from "lucide-react";
 import { ModeToggle } from "./mode-toggle";
 import { LogoIcon } from "./Icons";
 import Link from "next/link";
+import { SheetContent } from "@/components/ui/sheet";
 
 interface RouteProps {
   href: string;
@@ -77,7 +77,7 @@ export const Navbar = () => {
                 </Menu>
               </SheetTrigger>
 
-              <SheetHeader side={"left"}>
+              <SheetContent side={"left"}>
                 <SheetHeader>
                   <SheetTitle className="font-bold text-xl">
                     Shadcn/React
@@ -107,7 +107,7 @@ export const Navbar = () => {
                     Github
                   </a>
                 </nav>
-              </SheetHeader>
+              </SheetContent>
             </Sheet>
           </span>
 

@@ -32,6 +32,9 @@ import { toast } from "sonner";
 import { DialogOverlay } from "@radix-ui/react-dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { useRoleStore } from "@/lib/store/useRoleStore";
+import confetti from "canvas-confetti";
+import Image from "next/image";
+import { useExecutionStore } from "@/lib/store/useExecutionStore";
 
 type SupportedLanguage = {
   language_id: string;
@@ -112,10 +115,46 @@ export default function CodeEditor({
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
   const [isExecuting, setIsExecuting] = executingState;
+  const [pointsAwarded, setPointsAwarded] = useState<string | null>(null);
 
   const { context } = useRoleStore();
+  const { setIsExecutingComplete } = useExecutionStore();
 
-  const handleExecute = async () => {
+  const handleConfetti = () => {
+    const end = Date.now() + 3 * 1000;
+    const colors = ["#FF00C7", "#00FFFF", "#FF4D4D", "#8A2BE2", "#FF6EC7"];
+
+    const frame = () => {
+      if (Date.now() > end) return;
+
+      confetti({
+        particleCount: 5,
+        angle: 60,
+        spread: 60,
+        startVelocity: 60,
+        origin: { x: 0, y: 0.7 },
+        colors: colors,
+      });
+      confetti({
+        particleCount: 5,
+        angle: 120,
+        spread: 60,
+        startVelocity: 60,
+        origin: { x: 1, y: 0.7 },
+        colors: colors,
+      });
+
+      requestAnimationFrame(frame);
+    };
+
+    frame();
+  };
+
+  const handleExecute = async ({
+    mode = "run",
+  }: {
+    mode: "run" | "submit";
+  }) => {
     setIsExecuting(true);
     const currentUserCode =
       code?.userCode[selectedLanguage.toLowerCase() as keyof CodeLanguages];
@@ -125,10 +164,35 @@ export default function CodeEditor({
       problemId,
       selectedLanguage,
       currentUserCode || "",
-      currentLogicCode || ""
+      currentLogicCode || "",
+      mode
     );
-    setTestResult(result?.data);
+    if (result?.data?.success) {
+      setTestResult(result?.data);
+      if (mode === "submit") {
+        if (result?.data?.isSubmitSuccess) {
+          toast.success("You passed all test cases", {
+            position: "top-center",
+          });
+          handleConfetti();
+          console.log("points awarded", result.data.pointsAwarded);
+          setPointsAwarded("+" + String(result?.data?.pointsAwarded) || "0");
+          setTimeout(() => {
+            setPointsAwarded(null);
+          }, 6000);
+        } else {
+          toast.error("You failed some test cases", { position: "top-center" });
+        }
+      }
+    } else {
+      toast.error("Failed to execute the code.");
+      setTestResult({
+        results: [],
+        standardError: undefined,
+      });
+    }
     setIsExecuting(false);
+    setIsExecutingComplete(true);
   };
 
   const handleConfirmReset = () => {
@@ -187,7 +251,7 @@ export default function CodeEditor({
 
   useEffect(() => {
     const getData = async () => {
-      const result = await getStarterCode(problemId);
+      const result = await getStarterCode(problemId, context);
       if (result?.data) {
         console.log(result.data);
         const data: ProblemLanguagesResponse = result.data;
@@ -223,10 +287,29 @@ export default function CodeEditor({
     };
 
     getData();
-  }, [problemId]);
+  }, [problemId, context]);
 
   return (
     <Card className="h-full border rounded-lg">
+      {pointsAwarded && (
+        <div className="fixed inset-0 w-screen h-screen z-40 flex items-center justify-center">
+          {/* <div className="p-8 rounded-full w-fit text-[2rem] text-primary-foreground font-bold bg-primary animate-rotate-fade">
+            {pointsAwarded || "+12"}
+          </div> */}
+          <div className="relative animate-rotate-fade">
+            <Image
+              className=""
+              src="/icons/coin3.png"
+              width={130}
+              height={130}
+              alt="coin"
+            />
+            <div className="coiny absolute text-[2.2rem] text-[#fcf486] font-bold top-[46%] left-1/2 -translate-x-1/2 -translate-y-1/2">
+              {pointsAwarded || "00"}
+            </div>
+          </div>
+        </div>
+      )}
       <CardContent className="p-0 h-full flex flex-col">
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex gap-3 items-center">
@@ -319,7 +402,9 @@ export default function CodeEditor({
             <Button
               variant="outline"
               size="sm"
-              onClick={handleExecute}
+              onClick={() => {
+                handleExecute({ mode: "run" });
+              }}
               className="flex items-center gap-1"
             >
               {isExecuting ? (
@@ -476,8 +561,7 @@ export default function CodeEditor({
               <Button
                 variant="default"
                 onClick={() => {
-                  // Add your submit logic here
-                  toast.success("Code submitted successfully!");
+                  handleExecute({ mode: "submit" });
                   setIsSubmitDialogOpen(false);
                 }}
               >

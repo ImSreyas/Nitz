@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Bell, ChevronDown, Lock, Search, Settings, User } from "lucide-react";
+import { Bell, ChevronDown, Search, Settings, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePathname } from "next/navigation";
+import LogoutComponent from "@/app/components/common/LogoutComponent";
 
 export default function Header({
   nonVisiblePaths,
@@ -94,10 +95,7 @@ export default function Header({
                   <span>Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Lock className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
+                <LogoutComponent />
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

@@ -14,19 +14,40 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  ChevronDown,
-  Lock,
-  Settings,
-  Sparkles,
-  Trophy,
-  User,
-} from "lucide-react";
-import React from "react";
+import { ChevronDown, Settings, Sparkles, Trophy, User } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { useRoleStore } from "@/lib/store/useRoleStore";
+import LogoutComponent from "../../LogoutComponent";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
+
+const profilePaths = {
+  admin: "/admin/profile",
+  moderator: "/moderator/profile",
+  user: "/user/profile",
+};
 
 export default function Header() {
+  const supabase = createClient();
   const { context } = useRoleStore();
+  const router = useRouter();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [user, setUser] = useState<any>(null);
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (error) {
+        console.log("Error fetching user:", error);
+      } else {
+        setUser(data);
+      }
+    };
+    fetchUser();
+  }, [supabase]);
+
+  const handleProfileClick = () => {
+    router.push(profilePaths[context]);
+  };
 
   return (
     <div className=" w-fit flex items-center gap-4">
@@ -67,7 +88,9 @@ export default function Header() {
             {context === "admin" ? (
               <div className="text-sm font-medium">Admin</div>
             ) : (
-              <div className="text-sm font-medium">John Doe</div>
+              <div className="text-sm font-medium">
+                {user?.user.user_metadata.name || "User"}
+              </div>
             )}
             <ChevronDown className="h-4 w-4 text-muted-foreground" />
           </Button>
@@ -75,19 +98,17 @@ export default function Header() {
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={handleProfileClick}>
             <User className="mr-2 h-4 w-4" />
             <span>Profile</span>
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Settings</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>
-            <Lock className="mr-2 h-4 w-4" />
-            <span>Log out</span>
-          </DropdownMenuItem>
+          {context === "admin" && (
+            <DropdownMenuItem>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </DropdownMenuItem>
+          )}
+          <LogoutComponent />
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

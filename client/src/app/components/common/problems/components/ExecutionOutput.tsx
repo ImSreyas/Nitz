@@ -45,12 +45,18 @@ export default function ExecutionOutput({
       <Tabs
         defaultValue="test-cases"
         value={activeTab ?? undefined}
-        onValueChange={(value) => setActiveTab(value as "test-cases" | "standard-error" | null)}
+        onValueChange={(value) =>
+          setActiveTab(value as "test-cases" | "standard-error" | null)
+        }
         className="h-full"
       >
         <TabsList className="mb-4 border border-foreground/10">
-          <TabsTrigger value="test-cases" className="text-[13px]">Test Cases</TabsTrigger>
-          <TabsTrigger value="standard-error" className="text-[13px]">Standard Error</TabsTrigger>
+          <TabsTrigger value="test-cases" className="text-[13px]">
+            Test Cases
+          </TabsTrigger>
+          <TabsTrigger value="standard-error" className="text-[13px]">
+            Standard Error
+          </TabsTrigger>
         </TabsList>
 
         {/* Test Cases Tab */}
@@ -63,54 +69,69 @@ export default function ExecutionOutput({
                   value={result.testCaseId}
                   className="border-b-0"
                 >
-                  <AccordionTrigger className="flex items-center justify-between px-4 py-2 bg-muted rounded-md border text-xs">
-                    <span className="flex items-center gap-2 justify-between w-full pe-2">
-                      <span>{`Test Case ${index + 1}`}</span>
-                      {result.success ? (
-                        <CheckCircle className="text-green-600" size={15} />
-                      ) : (
-                        <XCircle className="text-red-600" size={15} />
-                      )}
-                    </span>
-                  </AccordionTrigger>
-
-                  {/* Expanded details */}
-                  <AccordionContent className="p-3 bg-card rounded-md border text-xs space-y-4 my-2">
-                    <div>
-                      <div className="flex">
-                        <strong className="block text-muted-foreground mb-2 mr-2">
-                          Status:
-                        </strong>
+                  {result.isSubmit ? (
+                    <div className="flex items-center justify-between px-4 py-2 bg-muted rounded-md border text-xs">
+                      <span className="flex items-center gap-2 justify-between w-full pe-2">
+                        <span>{`Test Case ${index + 1}`}</span>
                         {result.success ? (
-                          <span className="text-green-600">Passed</span>
+                          <CheckCircle className="text-green-600" size={15} />
                         ) : (
-                          <span className="text-red-600">Failed</span>
+                          <XCircle className="text-red-600" size={15} />
                         )}
-                      </div>
-                      <strong className="block text-muted-foreground mb-1">
-                        Input:
-                      </strong>
-                      <pre className="bg-muted/20 p-2 rounded-md overflow-x-auto">
-                        {result.input}
-                      </pre>
+                      </span>
                     </div>
-                    <div>
-                      <strong className="block text-muted-foreground mb-1">
-                        Expected Output:
-                      </strong>
-                      <pre className="bg-muted/20 p-2 rounded-md overflow-x-auto">
-                        {result.expectedOutput}
-                      </pre>
-                    </div>
-                    <div>
-                      <strong className="block text-muted-foreground mb-1">
-                        Actual Output:
-                      </strong>
-                      <pre className="bg-muted/20 p-2 rounded-md overflow-x-auto">
-                        {result.actualOutput}
-                      </pre>
-                    </div>
-                  </AccordionContent>
+                  ) : (
+                    <>
+                      <AccordionTrigger className="flex items-center justify-between px-4 py-2 bg-muted rounded-md border text-xs">
+                        <span className="flex items-center gap-2 justify-between w-full pe-2">
+                          <span>{`Test Case ${index + 1}`}</span>
+                          {result.success ? (
+                            <CheckCircle className="text-green-600" size={15} />
+                          ) : (
+                            <XCircle className="text-red-600" size={15} />
+                          )}
+                        </span>
+                      </AccordionTrigger>
+
+                      {/* Expanded details */}
+                      <AccordionContent className="p-3 bg-card rounded-md border text-xs space-y-4 my-2">
+                        <div>
+                          <div className="flex">
+                            <strong className="block text-muted-foreground mb-2 mr-2">
+                              Status:
+                            </strong>
+                            {result.success ? (
+                              <span className="text-green-600">Passed</span>
+                            ) : (
+                              <span className="text-red-600">Failed</span>
+                            )}
+                          </div>
+                          <strong className="block text-muted-foreground mb-1">
+                            Input:
+                          </strong>
+                          <pre className="bg-muted/20 p-2 rounded-md overflow-x-auto">
+                            {result.input}
+                          </pre>
+                        </div>
+                        <div>
+                          <strong className="block text-muted-foreground mb-1">
+                            Expected Output:
+                          </strong>
+                          <pre className="bg-muted/20 p-2 rounded-md overflow-x-auto">
+                            {result.expectedOutput}
+                          </pre>
+                        </div>
+                        <div>
+                          <strong className="block text-muted-foreground mb-1">
+                            Actual Output:
+                          </strong>
+                          <pre className="bg-muted/20 p-2 rounded-md overflow-x-auto">
+                            {result.actualOutput}
+                          </pre>
+                        </div>
+                      </AccordionContent>
+                    </>
+                  )}
                 </AccordionItem>
               ))}
             </Accordion>

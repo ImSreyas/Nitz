@@ -18,7 +18,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { CalendarDays, CircleUserRound, Search } from "lucide-react";
+import { CalendarDays, CircleUserRound, Database, Search } from "lucide-react";
 import { getAllProblems } from "@/lib/api/common";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,8 @@ interface Problem {
   username: string;
   added_date: string;
   topics: string[];
+  status: string;
+  publish_status: boolean;
 }
 
 const months = [
@@ -80,21 +82,35 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export default function ProblemsList() {
+export default function ProblemsList({
+  context = "moderator",
+}: {
+  context?: "moderator" | "admin";
+}) {
   const [problems, setProblems] = useState<Problem[] | null>(null);
   const [filteredProblems, setFilteredProblems] = useState<Problem[] | null>(
     null
   );
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortOption, setSortOption] = useState<"title" | "difficulty" | null>(
-    null
-  );
+  const [sortOption, setSortOption] = useState<
+    "title" | "difficulty" | "date" | null
+  >(null);
   const [difficultyFilter, setDifficultyFilter] = useState<
     "beginner" | "easy" | "medium" | "hard" | "complex" | null
   >(null);
+  const [publishStatusFilter, setPublishStatusFilter] = useState<
+    boolean | null
+  >(null);
+  const [approvalStatusFilter, setApprovalStatusFilter] = useState<
+    "pending" | "approved" | "rejected" | "archived" | "deprecated" | null
+  >(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = context === "moderator" ? 3 : 6;
 
   const getProblems = async () => {
-    const response = await getAllProblems();
+    const response = await getAllProblems(context);
     if (response?.status === 200) {
       setProblems(response.data);
       setFilteredProblems(response.data);
@@ -105,6 +121,7 @@ export default function ProblemsList() {
 
   useEffect(() => {
     getProblems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Filter and sort logic
@@ -128,6 +145,20 @@ export default function ProblemsList() {
         );
       }
 
+      // Publish status filter
+      if (publishStatusFilter !== null) {
+        updatedProblems = updatedProblems.filter(
+          (problem) => problem.publish_status === publishStatusFilter
+        );
+      }
+
+      // Approval status filter
+      if (approvalStatusFilter) {
+        updatedProblems = updatedProblems.filter(
+          (problem) => problem.status === approvalStatusFilter
+        );
+      }
+
       // Sort
       if (sortOption === "title") {
         updatedProblems.sort((a, b) =>
@@ -146,11 +177,117 @@ export default function ProblemsList() {
             difficultyOrder.indexOf(a.difficulty) -
             difficultyOrder.indexOf(b.difficulty)
         );
+      } else if (sortOption === "date") {
+        updatedProblems.sort((a, b) => {
+          const dateA = new Date(a.added_date);
+          const dateB = new Date(b.added_date);
+          return dateB.getTime() - dateA.getTime();
+        });
       }
 
       setFilteredProblems(updatedProblems);
+      setCurrentPage(1); // Reset to the first page after filtering
     }
-  }, [searchQuery, sortOption, difficultyFilter, problems]);
+  }, [
+    searchQuery,
+    sortOption,
+    difficultyFilter,
+    publishStatusFilter,
+    approvalStatusFilter,
+    problems,
+  ]);
+
+  // Pagination logic
+  const totalPages = Math.ceil((filteredProblems?.length || 0) / itemsPerPage);
+  const paginatedProblems = filteredProblems?.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const renderPagination = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(
+          <Button
+            key={i}
+            variant={currentPage === i ? "default" : "outline"}
+            size="sm"
+            onClick={() => handlePageChange(i)}
+          >
+            {i}
+          </Button>
+        );
+      }
+    } else {
+      if (currentPage > 2) {
+        pages.push(
+          <Button
+            key={1}
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(1)}
+          >
+            1
+          </Button>
+        );
+        if (currentPage > 3) {
+          pages.push(
+            <span key="start-ellipsis" className="px-2 text-muted-foreground">
+              ...
+            </span>
+          );
+        }
+      }
+
+      for (
+        let i = Math.max(1, currentPage - 1);
+        i <= Math.min(totalPages, currentPage + 1);
+        i++
+      ) {
+        pages.push(
+          <Button
+            key={i}
+            variant={currentPage === i ? "default" : "outline"}
+            size="sm"
+            onClick={() => handlePageChange(i)}
+          >
+            {i}
+          </Button>
+        );
+      }
+
+      if (currentPage < totalPages - 1) {
+        if (currentPage < totalPages - 2) {
+          pages.push(
+            <span key="end-ellipsis" className="px-2 text-muted-foreground">
+              ...
+            </span>
+          );
+        }
+        pages.push(
+          <Button
+            key={totalPages}
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(totalPages)}
+          >
+            {totalPages}
+          </Button>
+        );
+      }
+    }
+
+    return pages;
+  };
 
   return (
     <div className="container p-8">
@@ -176,7 +313,7 @@ export default function ProblemsList() {
           {/* Sort */}
           <Select
             onValueChange={(value) =>
-              setSortOption(value as "title" | "difficulty")
+              setSortOption(value as "title" | "difficulty" | "date")
             }
           >
             <SelectTrigger className="w-full md:w-40">
@@ -185,6 +322,7 @@ export default function ProblemsList() {
             <SelectContent>
               <SelectItem value="title">Title</SelectItem>
               <SelectItem value="difficulty">Difficulty</SelectItem>
+              <SelectItem value="date">Date</SelectItem>
             </SelectContent>
           </Select>
 
@@ -218,12 +356,77 @@ export default function ProblemsList() {
               <SelectItem value="complex">Complex</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* Filter by Publish Status */}
+          <Select
+            onValueChange={(value) => {
+              if (value === "all") {
+                setPublishStatusFilter(null);
+              } else {
+                setPublishStatusFilter(value === "true");
+              }
+            }}
+          >
+            <SelectTrigger className="w-full md:w-40">
+              <SelectValue placeholder="Filter by Publish Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="true">Published</SelectItem>
+              <SelectItem value="false">Unpublished</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Filter by Approval Status */}
+          <Select
+            onValueChange={(value) => {
+              if (value === "all") {
+                setApprovalStatusFilter(null);
+              } else {
+                setApprovalStatusFilter(
+                  value as
+                    | "pending"
+                    | "approved"
+                    | "rejected"
+                    | "archived"
+                    | "deprecated"
+                );
+              }
+            }}
+          >
+            <SelectTrigger className="w-full md:w-40">
+              <SelectValue placeholder="Filter by Approval Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="archived">Archived</SelectItem>
+              <SelectItem value="deprecated">Deprecated</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       {/* Problems Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-        {filteredProblems?.map((problem) => (
+        {paginatedProblems?.length === 0 && (
+          <div className="col-span-full text-center flex flex-col justify-center items-center gap-2 p-8 border border-dashed rounded-lg h-96">
+            <div className="w-fit">
+              <Database />
+            </div>
+            <div>
+              <p className="">
+                No problems found matching the selected filters.
+              </p>
+              <p className="text-muted-foreground text-sm">
+                Please change the filters
+              </p>
+            </div>
+          </div>
+        )}
+        {paginatedProblems?.map((problem) => (
           <Card
             key={problem.problem_number}
             className="hover:shadow-lg transition-shadow flex flex-col border border-muted/30 rounded-lg pt-3 overflow-hidden relative"
@@ -251,17 +454,35 @@ export default function ProblemsList() {
                 >
                   {problem.difficulty}
                 </div>
-                <div className="font-semibold text-xs px-2 py-1 bg-primary text-primary-foreground rounded-sm">
-                  {getRandomNumber(30, 80)}% Success Rate
+                <div className="flex items-center gap-2">
+                  <div>
+                    {problem.publish_status ? (
+                      <Badge className="text-xs px-2 py-1 bg-muted/20 text-green-500 border-accent">
+                        Published
+                      </Badge>
+                    ) : (
+                      <Badge className="text-xs px-2 py-1 bg-muted/20 text-yellow-500 border-accent">
+                        Unpublished
+                      </Badge>
+                    )}
+                  </div>
+                  <div>
+                    <Badge className="text-xs px-2 py-1 border-accent text-primary-foreground bg-primary ">
+                      {problem.status}
+                    </Badge>
+                  </div>
                 </div>
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6 pt-0 flex-grow flex flex-col justify-between">
               <div className="mb-4 flex gap-2">
-                <div className="flex items-center text-sm rounded-sm px-2 py-1 bg-accent w-fit text-muted-foreground">
-                  <CircleUserRound className="mr-2" size={16} />
-                  {problem.username}
-                </div>
+                {context === "admin" && (
+                  <div className="flex items-center text-sm rounded-sm px-2 py-1 bg-accent w-fit text-muted-foreground max-w-fit line-clamp-1 truncate">
+                    <CircleUserRound className="mr-2" size={16} />
+                    {problem.username}
+                  </div>
+                )}
+
                 <div className="flex items-center text-sm text-muted-foreground rounded-sm px-2 py-1 bg-accent w-fit">
                   <CalendarDays className="mr-2" size={16} />
                   {new Date(problem.added_date).toLocaleDateString("en-GB")}
@@ -331,7 +552,7 @@ export default function ProblemsList() {
                 </AreaChart>
               </ChartContainer>
             </CardContent>
-            <CardFooter className="p-6 bg-muted/5">
+            <CardFooter className="p-6 pt-0 bg-muted/5">
               <Link href={`./problems/${problem.id}`} className="w-full">
                 <Button variant="outline" className="w-full">
                   View Problem
@@ -340,6 +561,27 @@ export default function ProblemsList() {
             </CardFooter>
           </Card>
         ))}
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="flex gap-2 justify-end items-center mt-4">
+        <div className="flex items-center gap-2">{renderPagination()}</div>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={currentPage === 1}
+          onClick={() => handlePageChange(currentPage - 1)}
+        >
+          Previous
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={currentPage === totalPages}
+          onClick={() => handlePageChange(currentPage + 1)}
+        >
+          Next
+        </Button>
       </div>
     </div>
   );

@@ -9,6 +9,7 @@ import { RoleContext } from "@/lib/types/common";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRoleStore } from "@/lib/store/useRoleStore";
+import Solution from "./components/Solution";
 
 type ProblemProp = {
   id: string;
@@ -55,16 +56,11 @@ export default function Problem({ id, context = "user" }: ProblemProp) {
           </TabsContent>
 
           <TabsContent value="discuss">
-            <DiscussionArea />
+            <DiscussionArea problemId={id} />
           </TabsContent>
 
           <TabsContent value="solution">
-            <div className="rounded-lg border p-6">
-              <h2 className="text-2xl font-bold mb-4">Solution</h2>
-              <p>
-                This section would contain official solutions and explanations.
-              </p>
-            </div>
+            <Solution problemId={id} />
           </TabsContent>
 
           <TabsContent value="submissions">

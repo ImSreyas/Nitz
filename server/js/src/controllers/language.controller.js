@@ -10,15 +10,73 @@ const __dirname = path.dirname(__filename);
 const SUPPORTED_LANGUAGES = {
   python: {
     extension: "py",
-    image: "python-runner",
+    image: "python:3.11-alpine",
     runCmd: (tempDir, fileName, params) =>
-      `docker run --rm -v ${tempDir}:/app python-runner python /app/${fileName} ${params}`,
+      `docker run --rm -v ${tempDir}:/app -w /app python:3.11-alpine python ${fileName} ${params}`,
   },
-  javascript: {
-    extension: "js",
-    image: "node-runner",
+  java: {
+    fileName: "Main",
+    extension: "java",
+    image: "openjdk:21-slim",
+    runCmd: (tempDir, fileName, params) => {
+      const baseName = path.basename(fileName, ".java");
+      return (
+        `docker run --rm -v ${tempDir}:/app -w /app openjdk:21-slim ` +
+        `/bin/sh -c "javac ${fileName} && java ${baseName} ${params}"`
+      );
+    },
+  },
+  cpp: {
+    fileName: "main",
+    extension: "cpp",
+    image: "gcc:13.2.0",
     runCmd: (tempDir, fileName, params) =>
-      `docker run --rm -v ${tempDir}:/app node-runner node /app/${fileName} ${params}`,
+      `docker run --rm -v ${tempDir}:/app -w /app gcc:13.2.0 ` +
+      `/bin/sh -c "g++ ${fileName} -o main.out && ./main.out ${params}"`,
+  },
+  rust: {
+    fileName: "main",
+    extension: "rs",
+    image: "rust:1.76",
+    runCmd: (tempDir, fileName, params) =>
+      `docker run --rm -v ${tempDir}:/app -w /app rust:1.76 ` +
+      `/bin/sh -c "rustc ${fileName} -o main.out && ./main.out ${params}"`,
+  },
+  c: {
+    fileName: "main",
+    extension: "c",
+    image: "gcc:13.2.0",
+    runCmd: (tempDir, fileName, params) =>
+      `docker run --rm -v ${tempDir}:/app -w /app gcc:13.2.0 ` +
+      `/bin/sh -c "gcc ${fileName} -o main.out && ./main.out ${params}"`,
+  },
+  go: {
+    fileName: "main",
+    extension: "go",
+    image: "golang:1.21",
+    runCmd: (tempDir, fileName, params) =>
+      `docker run --rm -v ${tempDir}:/app -w /app golang:1.21 ` +
+      `go run ${fileName} ${params}`,
+  },
+  swift: {
+    fileName: "main",
+    extension: "swift",
+    image: "swift:5.9",
+    runCmd: (tempDir, fileName, params) =>
+      `docker run --rm -v ${tempDir}:/app -w /app swift:5.9 ` +
+      `swift ${fileName} ${params}`,
+  },
+  kotlin: {
+    fileName: "Main",
+    extension: "kt",
+    image: "zenika/kotlin",
+    runCmd: (tempDir, fileName, params) => {
+      const baseName = path.basename(fileName, ".kt");
+      return (
+        `docker run --rm -v ${tempDir}:/app -w /app zenika/kotlin ` +
+        `/bin/sh -c "kotlinc ${fileName} -include-runtime -d ${baseName}.jar && java -jar ${baseName}.jar ${params}"`
+      );
+    },
   },
 };
 
@@ -30,15 +88,15 @@ export async function runCode(language, code, params = "") {
 
     const id = uuid();
     const tempDir = path.join(__dirname, "..", "temp", id);
-    const fileName = `run.${SUPPORTED_LANGUAGES[language].extension}`;
+    const fileName = `${SUPPORTED_LANGUAGES[language].fileName || "run"}.${
+      SUPPORTED_LANGUAGES[language].extension
+    }`;
     const filePath = path.join(tempDir, fileName);
 
     try {
-      // Create temp directory and write code file
       fs.mkdirSync(tempDir, { recursive: true });
       fs.writeFileSync(filePath, code + "\n", { encoding: "utf8" });
 
-      // Ensure params are passed as a safe string
       const sanitizedParams = Array.isArray(params)
         ? params.map((p) => `"${p}"`).join(" ")
         : params;
@@ -49,16 +107,26 @@ export async function runCode(language, code, params = "") {
         sanitizedParams
       );
 
+      console.log("Executing command:", dockerRunCmd);
+
       exec(dockerRunCmd, (error, stdout, stderr) => {
         if (error) {
           console.error("Execution error:", error);
 
+          // Cleanup after error
+          cleanupTempDir(tempDir);
+
           return reject({
             success: false,
             error: "Execution failed",
-            details: stderr.trim() || error.message, // Send detailed error to frontend
+            details: stderr.trim() || error.message,
           });
         }
+
+        console.log("Execution output:", stdout.trim());
+
+        // Cleanup after success
+        cleanupTempDir(tempDir);
 
         return resolve({
           success: stdout.trim()[0] === "1",
@@ -68,16 +136,28 @@ export async function runCode(language, code, params = "") {
       });
     } catch (e) {
       console.error("Server error:", e);
+
+      // Cleanup after server error
+      cleanupTempDir(tempDir);
+
       return reject({
         success: false,
         error: "Server error",
         details: e.message,
       });
-    } finally {
-      // Cleanup temp directory after execution
-      setTimeout(() => {
-        fs.rmSync(tempDir, { recursive: true, force: true });
-      }, 10000);
     }
   });
+}
+
+// Helper function to clean up the temporary directory
+function cleanupTempDir(tempDir) {
+  try {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+    console.log(`Temporary directory ${tempDir} cleaned up.`);
+  } catch (cleanupError) {
+    console.error(
+      `Error cleaning up temporary directory ${tempDir}:`,
+      cleanupError.message
+    );
+  }
 }

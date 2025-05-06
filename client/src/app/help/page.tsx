@@ -28,7 +28,7 @@ export default function HelpPage() {
             <div>
               <h3 className="font-medium">Where can I find the user guide?</h3>
               <p className="text-sm text-muted-foreground">
-                The user guide is available in the "Documentation" section of
+                The user guide is available in the &quot;Documentation&quot; section of
                 the website.
               </p>
             </div>

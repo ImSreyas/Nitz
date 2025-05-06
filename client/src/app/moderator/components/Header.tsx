@@ -64,7 +64,7 @@ export default function Header({
                     <AvatarImage src="/placeholder.svg" alt="Avatar" />
                     <AvatarFallback>JD</AvatarFallback>
                   </Avatar>
-                  <div className="text-sm font-medium">John Doe</div>
+                  <div className="text-sm font-medium">Moderator</div>
                   <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>

@@ -3,5 +3,6 @@ export const NavAllowedPaths: string[] = [
   "/contest",
   "/leaderboard",
   "/groups",
-  "/discuss",
+  "/profile",
+  "/report"
 ];

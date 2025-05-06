@@ -41,9 +41,32 @@ interface Problem {
   is_deleted: boolean;
   blackpoints: number;
   publish_status: boolean;
-  status: "pending" | "completed" | "unsolved";
+  status: "pending" | "approved" | "rejected" | "archived" | "deprecated";
   moderator_name: string;
   moderator_username: string;
+  attend_status: null | "pending" | "accepted" | "rejected";
+}
+
+type AttendStatus = "pending" | "accepted" | "rejected" | null;
+
+function AttendStatusBadge({ status }: { status: AttendStatus }) {
+  const textColor =
+    status === "pending"
+      ? "text-yellow-500"
+      : status === "accepted"
+      ? "text-green-500"
+      : status === "rejected"
+      ? "text-red-500"
+      : "text-muted-foreground";
+  const text =
+    status === "pending"
+      ? "Tried"
+      : status === "accepted"
+      ? "Completed"
+      : status === "rejected"
+      ? "Rejected"
+      : "Unsolved";
+  return <div className={`text-end text-xs px-6 ${textColor}`}>{text}</div>;
 }
 
 export default function CodingProblems() {
@@ -68,28 +91,25 @@ export default function CodingProblems() {
         // Apply initial filters based on the conditions
         const filtered = fetchedProblems.filter(
           (problem) =>
-            problem.problem_type === "coding" &&
+            // problem.problem_type === "coding" &&
             problem.competition_mode === "general" &&
             !problem.is_deleted &&
             problem.blackpoints < 12 &&
-            problem.publish_status
+            problem.publish_status &&
+            problem.status === "approved"
         );
 
-        // Duplicate the same 3 questions 33 times
-        const duplicatedProblems: Problem[] = Array(33)
-          .fill(null)
-          .flatMap((_, index) =>
-            filtered.map((problem) => ({
-              ...problem,
-              problem_number: problem.problem_number + index * 100,
-            }))
-          );
+        const uniqueProblems = Array.from(
+          new Map(filtered.map((problem) => [problem.id, problem])).values()
+        );
 
-        setProblems(duplicatedProblems);
-        setFilteredProblems(duplicatedProblems);
+        console.log(uniqueProblems);
+
+        setProblems(uniqueProblems);
+        setFilteredProblems(uniqueProblems);
       }
     } catch (error) {
-      console.error("Error fetching problems:", error);
+      console.log("Error fetching problems:", error);
     }
   };
 
@@ -97,12 +117,8 @@ export default function CodingProblems() {
     fetchProblems();
   }, []);
 
-  const handleProblemClick = (problemId: string) => {
-    router.push(`/problems/${problemId}`);
-  }
-
   // Apply filters to problems
-  const applyFilters = () => {
+  useEffect(() => {
     let result = [...problems];
 
     // Apply search filter
@@ -119,29 +135,33 @@ export default function CodingProblems() {
       );
     }
 
-    // Apply status filter
     if (statusFilter !== "All") {
-      result = result.filter((problem) => problem.status === statusFilter);
+      result = result.filter((problem) => {
+        if (statusFilter === "unsolved") {
+          return problem.attend_status === null;
+        }
+        return problem.attend_status === statusFilter;
+      });
     }
 
     setFilteredProblems(result);
     setCurrentPage(1); // Reset to the first page after filtering
+  }, [searchQuery, difficultyFilter, statusFilter, problems]);
+
+  const handleProblemClick = (problemId: string) => {
+    router.push(`/problems/${problemId}`);
   };
 
-  // Handle filter changes
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    applyFilters();
   };
 
   const handleDifficultyChange = (value: string) => {
     setDifficultyFilter(value);
-    applyFilters();
   };
 
   const handleStatusChange = (value: string) => {
     setStatusFilter(value);
-    applyFilters();
   };
 
   // Function to get difficulty color
@@ -285,9 +305,10 @@ export default function CodingProblems() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="All">All Statuses</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="unsolved">Unsolved</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="accepted">Completed</SelectItem>
+            <SelectItem value="rejected">Rejected</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -300,13 +321,17 @@ export default function CodingProblems() {
               <TableHead className="w-[60px] px-5">#</TableHead>
               <TableHead>Problem Title</TableHead>
               <TableHead className="w-[120px]">Difficulty</TableHead>
-              <TableHead className="w-[120px]">Status</TableHead>
+              <TableHead className="w-[120px] text-end px-8">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {paginatedProblems.length > 0 ? (
               paginatedProblems.map((problem) => (
-                <TableRow key={problem.problem_number} onClick={() => handleProblemClick(problem.id)} className="hover:cursor-pointer">
+                <TableRow
+                  key={problem.problem_number}
+                  onClick={() => handleProblemClick(problem.id)}
+                  className="hover:cursor-pointer"
+                >
                   <TableCell className="font-medium px-5">
                     {problem.problem_number}.
                   </TableCell>
@@ -325,7 +350,9 @@ export default function CodingProblems() {
                       {problem.difficulty}
                     </span>
                   </TableCell>
-                  <TableCell className="capitalize">{problem.status}</TableCell>
+                  <TableCell className="capitalize">
+                    <AttendStatusBadge status={problem.attend_status} />
+                  </TableCell>
                 </TableRow>
               ))
             ) : (

@@ -71,8 +71,13 @@ export async function getStarterCode(
 }
 
 export async function getProblemsList() {
+  const supabase = createClient();
+  const user = await supabase.auth.getUser();
+  const userId = user.data?.user?.id;
   try {
-    const response = await axios.get(`${baseUrl}/api/problem/list`);
+    const response = await axios.get(
+      `${baseUrl}/api/problem/list?userId=${userId}`
+    );
     return response;
   } catch (error) {
     console.log("Error fetching problems list:", error);
@@ -126,5 +131,23 @@ export async function getProblemDiscussions(id: string) {
     return response;
   } catch (error) {
     console.log("Error fetching problem discussions:", error);
+  }
+}
+
+export async function getUserPoints() {
+  const supabase = createClient();
+  const user = await supabase.auth.getUser();
+  const userId = user.data?.user?.id;
+  if (!userId) {
+    console.log("User ID not found.");
+    return;
+  }
+  try {
+    const response = await axios.get(
+      `${baseUrl}/api/user/points?userId=${userId}`
+    );
+    return response;
+  } catch (error) {
+    console.log("Error fetching user points:", error);
   }
 }

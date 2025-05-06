@@ -1,6 +1,9 @@
+import LeaderBoard from "./components/LeaderBoard";
 
 export default function page() {
   return (
-    <div>Leaderboard page</div>
-  )
+    <div className="px-16 py-6">
+      <LeaderBoard />
+    </div>
+  );
 }

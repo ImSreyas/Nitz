@@ -8,8 +8,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Bell, ChevronDown, Search, Settings, User } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { ChevronDown, User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,11 +17,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
+// import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePathname } from "next/navigation";
 import LogoutComponent from "@/app/components/common/LogoutComponent";
+import Link from "next/link";
 
 export default function Header({
   nonVisiblePaths,
@@ -46,29 +46,14 @@ export default function Header({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-semibold">Moderator Dashboard</h1>
-            <Badge variant="outline" className="ml-2">
+            {/* <Badge variant="outline" className="ml-2">
               Beta
-            </Badge>
+            </Badge> */}
           </div>
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search problems, users..."
-                className="w-[250px] pl-8 md:w-[300px] lg:w-[400px]"
-              />
-            </div>
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" className="relative">
-                    <Bell className="h-4 w-4" />
-                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-                      4
-                    </span>
-                  </Button>
-                </TooltipTrigger>
+                <TooltipTrigger asChild></TooltipTrigger>
                 <TooltipContent>Notifications</TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -86,15 +71,12 @@ export default function Header({
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                <Link href="/moderator/profile">
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                </Link>
                 <LogoutComponent />
               </DropdownMenuContent>
             </DropdownMenu>

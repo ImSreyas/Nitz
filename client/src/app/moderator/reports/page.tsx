@@ -16,21 +16,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Eye } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
 
 interface Report {
   report_id: string;
@@ -43,7 +33,7 @@ interface Report {
   created_at: string;
 }
 
-export default function Reports() {
+export default function ModeratorReports() {
   const supabase = createClientComponentClient();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(false);
@@ -176,25 +166,6 @@ export default function Reports() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, typeFilter]);
 
-  const handleStatusChange = async (reportId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase
-        .from("tbl_reports")
-        .update({ status: newStatus })
-        .eq("report_id", reportId);
-
-      if (error) {
-        console.error("Error updating status:", error);
-      } else {
-        toast.success("Status updated successfully");
-        fetchReports();
-        fetchSummary();
-      }
-    } catch (error) {
-      console.error("Unexpected error updating status:", error);
-    }
-  };
-
   // Pagination logic
   const totalPages = Math.ceil(reports.length / itemsPerPage);
   const paginatedReports = reports.slice(
@@ -288,7 +259,7 @@ export default function Reports() {
   };
 
   return (
-    <div>
+    <div className="px-12 py-8">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {/* Total Reports */}
@@ -384,13 +355,12 @@ export default function Reports() {
                 <TableHead>Title</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedReports.length > 0 ? (
                 paginatedReports.map((report) => (
-                  <TableRow key={report.report_id}>
+                  <TableRow key={report.report_id} className="h-12">
                     <TableCell>
                       <Badge variant="outline">{report.type}</Badge>
                     </TableCell>
@@ -415,69 +385,11 @@ export default function Reports() {
                     <TableCell>
                       {new Date(report.created_at).toLocaleString()}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                            <span className="sr-only">View report</span>
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[625px]">
-                          <DialogHeader>
-                            <DialogTitle className="space-y-2">
-                              <div>Report #{report.report_id}</div>
-                              <div>{report.title}</div>
-                            </DialogTitle>
-                            <DialogDescription>
-                              Submitted on{" "}
-                              {new Date(report.created_at).toLocaleString()}
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="grid gap-4 py-4">
-                            <div className="grid gap-2">
-                              <Label>Description</Label>
-                              <div className="rounded-md bg-muted p-4 text-sm">
-                                {report.content}
-                              </div>
-                            </div>
-                            <div className="grid gap-2">
-                              <Label>Change Status</Label>
-                              <Select
-                                value={report.status}
-                                onValueChange={(newStatus) =>
-                                  handleStatusChange(
-                                    report.report_id,
-                                    newStatus
-                                  )
-                                }
-                              >
-                                <SelectTrigger className="w-full">
-                                  <SelectValue placeholder="Select status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="pending">
-                                    Pending
-                                  </SelectItem>
-                                  <SelectItem value="seen">Seen</SelectItem>
-                                  <SelectItem value="resolved">
-                                    Resolved
-                                  </SelectItem>
-                                  <SelectItem value="rejected">
-                                    Rejected
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-6">
+                  <TableCell colSpan={4} className="text-center py-6">
                     No reports found.
                   </TableCell>
                 </TableRow>

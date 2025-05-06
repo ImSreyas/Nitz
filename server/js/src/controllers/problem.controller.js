@@ -49,18 +49,33 @@ export async function getProblems(req, res) {
 }
 
 export async function getProblemsList(req, res) {
+  const { userId } = req.query;
   try {
+    // const query = `
+    //   SELECT 
+    //     p.*,
+    //     m.name AS moderator_name,
+    //     m.username AS moderator_username
+    //   FROM public.tbl_problems p
+    //   LEFT JOIN public.tbl_moderators m ON p.moderator_id = m.id
+    //   ORDER BY p.created_at DESC;
+    // `;
+
     const query = `
       SELECT 
         p.*,
         m.name AS moderator_name,
-        m.username AS moderator_username
+        m.username AS moderator_username,
+        ps.status AS attend_status -- Fetch the status from tbl_problem_submissions
       FROM public.tbl_problems p
-      LEFT JOIN public.tbl_moderators m ON p.moderator_id = m.id
+      LEFT JOIN public.tbl_moderators m 
+        ON p.moderator_id = m.id
+      LEFT JOIN public.tbl_problem_submissions ps 
+        ON p.id = ps.problem_id AND ps.user_id = $1 -- Join with submissions for the specific user
       ORDER BY p.created_at DESC;
-    `;
+    `
 
-    const { rows } = await pool.query(query);
+    const { rows } = await pool.query(query, [userId]);
 
     return res.status(200).json({
       success: true,

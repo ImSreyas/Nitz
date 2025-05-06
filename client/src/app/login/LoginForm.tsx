@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import GoogleIconSVG from "@/icons/GoogleIconSVG";
-import { Github } from "lucide-react";
+// import { Github } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { googleAuthLogin } from "../auth/googleAuth";
 import { useState } from "react";
@@ -134,10 +134,10 @@ export default function LoginForm() {
             Continue with Google
           </Button>
 
-          <Button variant="outline" className="w-full">
+          {/* <Button variant="outline" className="w-full">
             <Github className="w-5 h-5 mr-2" />
             Continue with GitHub
-          </Button>
+          </Button> */}
         </div>
 
         <div className="relative">

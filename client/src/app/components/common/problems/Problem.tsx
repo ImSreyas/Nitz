@@ -43,7 +43,6 @@ export default function Problem({ id, context = "user" }: ProblemProp) {
               <TabsList>
                 <TabsTrigger value="description">Description</TabsTrigger>
                 <TabsTrigger value="solution">Solution</TabsTrigger>
-                <TabsTrigger value="submissions">Submissions</TabsTrigger>
                 <TabsTrigger value="discuss">Discuss</TabsTrigger>
               </TabsList>
             </div>
@@ -61,13 +60,6 @@ export default function Problem({ id, context = "user" }: ProblemProp) {
 
           <TabsContent value="solution">
             <Solution problemId={id} />
-          </TabsContent>
-
-          <TabsContent value="submissions">
-            <div className="rounded-lg border p-6">
-              <h2 className="text-2xl font-bold mb-4">Your Submissions</h2>
-              <p>This section would contain your previous submissions.</p>
-            </div>
           </TabsContent>
         </Tabs>
       </div>

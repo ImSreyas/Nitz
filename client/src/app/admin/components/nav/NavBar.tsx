@@ -8,7 +8,7 @@ import {
   Shield,
   AlertTriangle,
   FileText,
-  Bell,
+  // Bell,
   Settings,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -36,11 +36,11 @@ export default function NavBar({
         <NavLink href="/admin/moderators" icon={Shield} label="Moderators" />
         <NavLink href="/admin/problems" icon={FileText} label="Problems" />
         <NavLink href="/admin/reports" icon={AlertTriangle} label="Reports" />
-        <NavLink
+        {/* <NavLink
           href="/admin/notifications"
           icon={Bell}
           label="Notifications"
-        />
+        /> */}
         <NavLink href="/admin/settings" icon={Settings} label="Settings" />
       </div>
     </div>

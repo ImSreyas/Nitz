@@ -2,8 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, FileText, Shield, Users } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { getDashboardData } from "@/lib/api/admin";
-import UserChart from "../components/charts/UserChart";
-import ModeratorChart from "../components/charts/ModeratorChart";
 import { toast } from "sonner";
 
 export default function Overview() {
@@ -40,7 +38,7 @@ export default function Overview() {
 
   return (
     <div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2 px-10">
         {/* Total Users */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -111,10 +109,10 @@ export default function Overview() {
       </div>
 
       {/* Placeholder for charts */}
-      <div className="grid grid-cols-3 mt-6 gap-4">
+      {/* <div className="grid grid-cols-3 mt-6 gap-4">
         <UserChart />
         <ModeratorChart />
-      </div>
+      </div> */}
     </div>
   );
 }

@@ -15,7 +15,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Github } from "lucide-react";
+// import { Github } from "lucide-react";
 import GoogleIconSVG from "@/icons/GoogleIconSVG";
 import { Info } from "lucide-react"; // Import the Info icon
 import { createClient } from "@/utils/supabase/client";
@@ -164,16 +164,16 @@ export default function SignupForm() {
           <div className="space-y-4">
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full mb-3"
               onClick={() => {
                 googleAuthSignUp("user");
               }}
             >
               <GoogleIconSVG /> Continue with Google
             </Button>
-            <Button variant="outline" className="w-full">
+            {/* <Button variant="outline" className="w-full">
               <Github className="mr-2 h-4 w-4" /> Continue with GitHub
-            </Button>
+            </Button> */}
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
